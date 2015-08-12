@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="transaction">
+
+  <typeAlias alias="transaction" type="com.sample.po.Transaction"/>
+
+  <resultMap class="com.sample.po.Transaction" id="transactionResult">
+    <result column="name" jdbcType="VARCHAR" property="name"/>
+    <result column="participant_num" jdbcType="SMALLINT" property="participantNum"/>
+    <result column="participants" jdbcType="VARCHAR" property="participants"/>
+  </resultMap>
+  
+  <select id="queryById" parameterClass="String" resultMap="transactionResult">
+    select name, participant_num, participants
+    from transaction where name = #name:VARCHAR#
+  </select>
+  
+  <insert id="insert" parameterClass="com.sample.po.Transaction">
+    insert into transaction (name, participant_num, participants)
+    values (#name:VARCHAR#, #participantNum:SMALLINT#, #participants:VARCHAR#)
+  </insert>
+  
+  <update id="update" parameterClass="com.sample.po.Transaction" >
+    update transaction
+    <dynamic prepend="set" >
+      <isNotNull prepend="," property="participantNum" >
+        participant_num = #participantNum:SMALLINT#
+      </isNotNull>
+      <isNotNull prepend="," property="participants" >
+        participants = #participants:VARCHAR#
+      </isNotNull>
+    </dynamic>
+    where name = #name:VARCHAR#
+  </update>
+  
+</sqlMap>

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+    <!-- 统一配置中心 -->
+	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
+        <constructor-arg value="192.168.1.91:2181,192.168.1.92:2181,192.168.1.93:2181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf"/>
+    </bean>
+    
+    <!-- 日志消息发送器 -->
+    <bean id="logMessageSender" class="com.zpaas.message.MessageSender" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/message/logMessageSender"/>
+    </bean>
+    <!-- 消息发送器 -->
+    <bean id="messageSender" class="com.zpaas.message.MessageSender" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/message/messageSender"/>
+    </bean>
+    
+    <!-- 系统日志服务 -->
+    <bean id="sysLogSVC" class="com.zpaas.log.MongoLogSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/log/sysLogSVC"/>
+    </bean>
+    
+    <!-- 交易日志服务 -->
+    <bean id="tradeLogSVC" class="com.zpaas.log.MongoLogSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/log/tradeLogSVC"/>
+    </bean>
+    
+    <!-- 普通文件服务 -->
+    <bean id="fileSVC" class="com.zpaas.file.MongoFileManagerSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/file/fileSVC"/>
+    </bean>
+    
+    <!-- 机密文件服务 -->
+    <bean id="secureFileSVC" class="com.zpaas.file.MongoFileManagerSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/file/secureFileSVC"/>
+    </bean>
+    
+    <!-- 规则文件服务 -->
+    <bean id="ruleFileSVC" class="com.zpaas.file.MongoFileManagerSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/file/ruleFileSVC"/>
+    </bean>
+    
+    <!-- 远程缓存服务 -->
+    <bean id="remoteCacheSVC" class="com.zpaas.cache.remote.RemoteCacheSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/cache/remoteCacheSVC"/>
+    </bean>
+    
+    <!-- 本地缓存服务 -->
+    <bean id="localCacheSVC" class="com.zpaas.cache.local.LocalCacheSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/cache/localCacheSVC"/>
+    </bean>
+    
+    <!-- 加密服务 -->
+    <bean id="desCipherSVC" class="com.zpaas.security.cipher.DesCipherSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/security/desCipherSVC"/>
+        <property name="secureFileRepo" ref="secureFileSVC"/>
+    </bean>
+</beans>

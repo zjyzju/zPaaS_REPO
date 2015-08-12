@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
+		<constructor-arg
+			value="192.168.1.91:2181,192.168.1.92:2181,192.168.1.93:2181" />
+		<constructor-arg value="P" />
+		<property name="auth"
+			value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf" />
+	</bean>
+	
+	<dubbo:application name="zPaaS_service_template" />
+	<dubbo:registry protocol="zookeeper" address="192.168.1.91:2181,192.168.1.92:2181,192.168.1.93:2181" />
+	<dubbo:provider timeout="20000" retries="0" />
+	<dubbo:protocol name="dubbo" port="20880" />
+	<!--<dubbo:monitor protocol="registry" /> -->
+
+	<!-- 账户管理 -->
+	<dubbo:service interface="com.sample.service.TransactionSVC" ref="transactionSVC" group="iuy_group" retries="0" timeout="20000" />
+	<bean id="transactionSVC" class="com.sample.service.impl.TransactionSVCImpl">
+		<property name="dao" ref="transactionDAO" />
+	</bean>
+
+	<bean id="transactionDAO" class="com.sample.dao.impl.TransactionDAOImpl">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+		<property name="seq" ref="transaction_seq" />
+	</bean>
+
+	<bean id="transactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+		<property name="transactionManager" ref="transactionManager"/>
+		<!-- 配置事务属性 -->
+		<property name="transactionAttributes">
+			<props>
+				<prop key="*">PROPAGATION_REQUIRED,-Exception</prop>
+				<prop key="get*">PROPAGATION_REQUIRED,readOnly</prop>
+				<prop key="find*">PROPAGATION_REQUIRED,readOnly</prop>
+				<prop key="list*">PROPAGATION_REQUIRED,readOnly</prop>
+			</props>
+		</property>
+	</bean>
+	<bean class="org.springframework.aop.framework.autoproxy.BeanNameAutoProxyCreator">
+		<property name="beanNames">
+			<list>
+				<value>*SVC</value>
+			</list>
+		</property>
+		<property name="interceptorNames">
+			<list>
+				<value>transactionInterceptor</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="transactionManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref local="iuydb" />
+		</property>
+	</bean>
+	<bean id="transactionTemplate"
+		class="org.springframework.transaction.support.TransactionTemplate">
+		<property name="transactionManager">
+			<ref local="transactionManager" />
+		</property>
+	</bean>
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation">
+			<value>classpath:/sqlMapConfig.xml</value>
+		</property>
+		<property name="dataSource">
+			<ref bean="iuydb" />
+		</property>
+	</bean>
+	<bean id="iuydb" class="com.zpaas.db.distribute.DistributedDataSource"
+		init-method="init">
+		<property name="cc" ref="cc" />
+		<property name="confPath" value="/zpaas/iuydb/iuy_db" />
+		<property name="fileManager" ref="fileSVC" />
+	</bean>
+	<bean id="fileSVC" class="com.zpaas.file.MongoFileManagerSVCImpl"
+		init-method="init">
+		<property name="cc" ref="cc" />
+		<property name="confPath" value="/zpaas/file/fileSVC" />
+	</bean>
+	<bean id="sequenceService" class="com.zpaas.db.sequence.SequenceServiceImpl"
+		init-method="init">
+		<property name="cc" ref="cc" />
+		<property name="confPath" value="/zpaas/iuydb/sequence" />
+		<property name="sequenceTable" value="sequence" />
+		<property name="range" value="1000" />
+	</bean>
+	<bean id="transaction_seq" class="com.zpaas.db.sequence.Sequence">
+		<property name="service" ref="sequenceService" />
+		<property name="sequenceName" value="transaction_seq" />
+	</bean>
+</beans>
