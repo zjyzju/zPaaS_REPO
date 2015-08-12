@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+	<bean id="cc" class="com.zpaas.ConfigurationCenter">
+        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="P"/>
+    </bean>
+    <bean id="messageListener" class="com.zpaas.message.MessageListenerSample"/>
+    <bean id="messageConsumer" class="com.zpaas.message.MessageConsumer" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="listener" ref="messageListener"/>
+        <property name="confPath" value="/com/zpaas/message/messageConsumer"/>
+        <property name="groupId" value="sample_message_group"/>
+        <property name="monitorTopicList">
+	        <list>
+	        	<value>message-topic</value>
+	        </list>
+        </property>
+    </bean>
+</beans>

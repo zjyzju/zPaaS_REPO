@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+        
+	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+    </bean>
+    <bean id="logMessageSender" class="com.zpaas.message.MessageSender" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/message/logMessageSender"/>
+    </bean>
+    <bean id="messageSender" class="com.zpaas.message.MessageSender" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/message/messageSender"/>
+    </bean>
+    
+    <bean id="sysLogSVC" class="com.zpaas.log.MongoLogSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/log/sysLogSVC"/>
+    </bean>
+    
+    <bean id="tradeLogSVC" class="com.zpaas.log.MongoLogSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/log/tradeLogSVC"/>
+    </bean>
+    
+    <bean id="fileManagerSVC" class="com.zpaas.file.MongoFileManagerSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/file/fileManagerSVC"/>
+    </bean>
+    
+    <bean id="secureFileSVC" class="com.zpaas.file.MongoFileManagerSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/file/secureFileSVC"/>
+    </bean>
+    
+    <bean id="sessionSVC" class="com.zpaas.session.SessionManager" init-method="init">
+             <property name="cc" ref="cc"/>
+             <property name="confPath" value="/com/zpaas/session/sessionSVC"/>
+    </bean>
+    
+    <bean id="remoteCacheSVC" class="com.zpaas.cache.remote.RemoteCacheSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/cache/remoteCacheSVC"/>
+    </bean>
+    
+    <bean id="signatureSVC" class="com.zpaas.security.signature.SHA1WithRSASignatureSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/secure/signatureSVC"/>
+        <property name="secureFileRepo" ref="secureFileSVC"/>
+    </bean>
+    
+    <bean id="umsPaySignatureSVC" class="com.zpaas.security.signature.UmsPaySignatureSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/secure/umsPaySignatureSVC"/>
+        <property name="secureFileRepo" ref="secureFileSVC"/>
+    </bean>
+    
+    <bean id="desCipherSVC" class="com.zpaas.security.cipher.DesCipherSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/cipher/desCipherSVC"/>
+        <property name="secureFileRepo" ref="secureFileSVC"/>
+    </bean>
+    
+    <bean id="unionSignMgr" class="com.zpaas.security.signature.SignatureSVCManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/secure/unionSignMgr"/>
+        <property name="secureFileRepo" ref="secureFileSVC"/>
+    </bean>
+    
+    <bean id="ruleSVC" class="com.zpaas.file.MongoFileManagerSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/rule/ruleSVC"/>
+    </bean>
+    
+    <bean id="httpClientManagerSVC" class="com.zpaas.http.HttpClientManagerSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/http/httpClientManagerSVC"/>
+    </bean>
+    <bean id="localCacheSVC" class="com.zpaas.cache.local.LocalCacheSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/cache/localCacheSVC"/>
+    </bean>
+</beans>
