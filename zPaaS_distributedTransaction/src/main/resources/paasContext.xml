@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+	<!--<bean id="cc" class="com.zpaas.client.ConfigurationCenter" init-method="init">
+        <constructor-arg value="133.0.43.195:2181,133.0.43.196:2181,133.0.43.196:2182"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+    </bean>-->
+    <bean id="cc" class="com.zpaas.client.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+    </bean>
+    <!-- <bean id="transactionManager" class="com.zpaas.client.tx.TransactionManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/tx/transactionManager"/>
+    </bean>-->
+    <bean id="logMessageSender" class="com.zpaas.client.message.MessageSender" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/message/logMessageSender"/>
+    </bean>
+    <bean id="messageSender" class="com.zpaas.client.message.MessageSender" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/message/messageSender"/>
+    </bean>
+    
+    <bean id="logWriter" class="com.zpaas.client.log.MongoLogWriter" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/logger/conf"/>
+    </bean>
+    
+    <bean id="tradeLogWriter" class="com.zpaas.client.log.MongoLogWriter" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/logger/tradeLogWriter"/>
+    </bean>
+    
+    <bean id="fileManager" class="com.zpaas.client.file.MongoFileManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/file/conf"/>
+    </bean>
+    
+    <bean id="secureFileRepo" class="com.zpaas.client.file.MongoFileManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/file/secureFileRepo"/>
+    </bean>
+    
+    <bean id="cacheSvc" class="com.zpaas.client.cache.CacheSvcImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/cache/conf"/>
+    </bean>
+    
+    <bean id="signature" class="com.zpaas.client.security.SignatureUtil" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/secure/conf"/>
+        <property name="secureFileRepo" ref="secureFileRepo"/>
+    </bean>
+    <bean id="unionPaySign" class="com.zpaas.client.security.SignatureUtil" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/secure/unionPaySign"/>
+        <property name="secureFileRepo" ref="secureFileRepo"/>
+    </bean>
+    
+    <bean id="ruleRepo" class="com.zpaas.client.file.MongoFileManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/file/ruleRepo"/>
+    </bean>
+</beans>

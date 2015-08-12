@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="cust">
+
+  <typeAlias alias="cust" type="com.distribute.tx.test.vo.Cust"/>
+
+  <resultMap class="com.distribute.tx.test.vo.Cust" id="custResult">
+  	<result column="cust_id" jdbcType="Long" property="custId"/>
+    <result column="name" jdbcType="VARCHAR" property="name"/>
+    <result column="cert_type" jdbcType="VARCHAR" property="certType"/>
+    <result column="cert_code" jdbcType="VARCHAR" property="certCode"/>
+  </resultMap>
+   <insert id="insert" parameterClass="com.distribute.tx.test.vo.Cust">
+    insert into cust (cust_id,name, cert_type, cert_code)
+    values (#custId:Long#,#name:VARCHAR#, #certType:VARCHAR#, #certCode:VARCHAR#)
+  </insert>
+  
+  <select id="queryById" parameterClass="Long" resultMap="custResult">
+    select cust_id,name, cert_type, cert_code
+    from cust where cust_id = #custId:Long#
+  </select>
+  
+</sqlMap>

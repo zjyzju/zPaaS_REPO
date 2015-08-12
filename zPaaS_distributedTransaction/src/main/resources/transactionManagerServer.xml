@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+	<!--<bean id="cc" class="com.ai.paas.client.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.1.228.198:39181,10.1.228.199:39181,10.1.228.200:39181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value=""/>
+    </bean>-->
+     
+    <bean id="cc" class="com.ai.paas.client.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+    </bean>
+     
+    
+    <bean id="abnormalTransactionResourceDispatcher" class="com.ai.paas.dispatcher.ResourceDispatcher" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/ai/paas/dispatcher/abnormalTransactionResourceDispatcher"/>
+        <property name="executor" ref="abnormalTransactionProcessor"/>
+        <property name="resourceId" value="abnormalTransactionProcessor"/>
+    </bean>
+    <bean id="abnormalTransactionProcessor" class="com.distribute.tx.server.AbnormalTransactionProcessor" >
+    	<property name="contextDAO" ref="contextDAO" />
+    	<property name="publisher" ref="transactionPublisher"/>
+    	<property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/ai/paas/tx/abnormalTransactionProcessor"/>
+    </bean>
+    <bean id="abnormalTransactionProcessorCron"  class="org.springframework.scheduling.quartz.CronTriggerBean">  
+       <property name="jobDetail">  
+	        <bean class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">  
+		        <property name="targetObject" ref="abnormalTransactionProcessor" />
+		        <property name="targetMethod" value="processAbnormalTransaction" />  
+		        <property name="concurrent" value="false" />
+		    </bean>
+        </property>
+        <property name="cronExpression" value="0/360 * * * * ?" /> 
+	</bean>
+	<bean name="quartz" autowire="no" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+			    <ref bean="abnormalTransactionProcessorCron"/>
+			</list>
+		</property>
+	</bean>
+     
+   <bean id="transactionManagerServer" class="com.distribute.tx.server.TransactionManagerServer" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="publisher" ref="transactionPublisher"/>
+        <property name="confPath" value="/com/ai/paas/tx/transactionManagerServer"/>
+        <property name="newTransactionProcessor" ref="newTransactionProcessor"/>
+        <property name="chgTransactionProcessor" ref="chgTransactionProcessor"/>
+        <property name="transactionDAO" ref="transactionDAO"/>
+        <property name="cacheSvc" ref="cacheSvc"/>
+    </bean>   
+    <bean id="cacheSvc" class="com.ai.paas.client.cache.CacheSvcImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/ai/paas/cache/conf"/>
+    </bean>
+    <bean id="transactionPublisher" class="com.distribute.tx.transaction.TransactionPublisher" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/ai/paas/tx/transactionPublisher"/>
+    </bean>
+    
+    <bean id="newTransactionProcessor" class="com.distribute.tx.server.NewTransactionProcessor">
+		<property name="contextDAO" ref="contextDAO" />
+		<property name="tt" ref="transactionTemplate" />
+	</bean>
+	<bean id="chgTransactionProcessor" class="com.distribute.tx.server.ChgTransactionProcessor">
+		<property name="contextDAO" ref="contextDAO" />
+		<property name="transactionDAO" ref="transactionDAO" />
+		<property name="cacheSvc" ref="cacheSvc"/>
+		<property name="tt" ref="transactionTemplate" />
+	</bean>
+	<bean id="contextDAO"
+		class="com.distribute.tx.server.dao.impl.TransactionContextDAOImpl">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	
+	<bean id="transactionDAO"
+		class="com.distribute.tx.server.dao.impl.TransactionDAOImpl">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref local="transactionManagerDB" />
+		</property>
+	</bean>
+	<bean id="transactionTemplate"
+		class="org.springframework.transaction.support.TransactionTemplate">
+		<property name="transactionManager">
+			<ref local="transactionManager" />
+		</property>
+	</bean>
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation">
+			<value>classpath:/sqlMapConfig.xml</value>
+		</property>
+		<property name="dataSource">
+			<ref bean="transactionManagerDB" />
+		</property>
+	</bean>
+	<bean id="transactionManagerDB" class="com.db.distribute.DistributedDataSource" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/ai/paas/db/distributeTransaction/transaction_manager_db"/>
+        <property name="fileManager" ref="fileManager"/>
+    </bean>
+    <bean id="fileManager" class="com.ai.paas.client.file.MongoFileManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/ai/paas/file/conf"/>
+    </bean>
+</beans>

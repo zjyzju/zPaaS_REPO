@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+	<!--<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.1.228.198:39181,10.1.228.199:39181,10.1.228.200:39181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value=""/>
+    </bean>-->
+     
+    <bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+    </bean>
+     
+    <bean id="transactionManager1" class="com.zpaas.dtx.eventual.TransactionManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/tx/transactionManager"/>
+        <property name="sequence" ref="sequence"/>
+        <property name="publisher" ref="transactionPublisher"/>
+        <property name="participant" value="transactionCheckerGroup1"/>
+        <property name="transactionChecker" ref="transactionChecker"/>
+    </bean>
+    <bean id="transactionChecker" class="com.distribute.tx.test.TransactionCheckSample" >
+    	<property name="custDao" ref="custDao"/>
+    </bean>
+    <bean id="transactionPublisher" class="com.distribute.tx.transaction.TransactionPublisher" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/tx/transactionPublisher"/>
+    </bean>
+    
+    <bean id="custDao"
+		class="com.distribute.tx.test.dao.impl.CustDAOImpl">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref local="testDB" />
+		</property>
+	</bean>
+	<bean id="transactionTemplate"
+		class="org.springframework.transaction.support.TransactionTemplate">
+		<property name="transactionManager">
+			<ref local="transactionManager" />
+		</property>
+	</bean>
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation">
+			<value>classpath:/sqlMapConfig-test.xml</value>
+		</property>
+		<property name="dataSource">
+			<ref bean="testDB" />
+		</property>
+	</bean>
+	<bean id="testDB" class="com.db.distribute.DistributedDataSource" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/db_cust"/>
+        <property name="fileManager" ref="fileManager"/>
+    </bean>
+    <bean id="fileManager" class="com.zpaas.client.file.MongoFileManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/file/conf"/>
+    </bean>
+    
+    <bean id="sequenceService" class="com.db.sequence.SequenceServiceImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/sequence/distributeTransaction"/>
+        <property name="sequenceTable" value="sequence"/>
+        <property name="range" value="1000"/>
+    </bean>
+    <bean id="sequence" class="com.db.sequence.Sequence" >
+        <property name="service" ref="sequenceService"/>
+        <property name="sequenceName" value="transaction_id_seq"/>
+    </bean>
+    
+    <bean id="sequenceService1" class="com.db.sequence.SequenceServiceImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/sequence"/>
+        <property name="sequenceTable" value="sequence"/>
+        <property name="range" value="1000"/>
+    </bean>
+    <bean id="cust_id_seq" class="com.db.sequence.Sequence" >
+        <property name="service" ref="sequenceService1"/>
+        <property name="sequenceName" value="cust_id_seq"/>
+    </bean>
+    
+</beans>

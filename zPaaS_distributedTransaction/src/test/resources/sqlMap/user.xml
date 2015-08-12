@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="user">
+
+  <typeAlias alias="user" type="com.distribute.tx.test.vo.User"/>
+
+  <resultMap class="com.distribute.tx.test.vo.User" id="custResult">
+  	<result column="user_id" jdbcType="Long" property="userId"/>
+    <result column="username" jdbcType="VARCHAR" property="username"/>
+    <result column="prov_id" jdbcType="VARCHAR" property="provId"/>
+    <result column="city_id" jdbcType="VARCHAR" property="cityId"/>
+    <result column="cust_id" jdbcType="Long" property="custId"/>
+  </resultMap>
+   <insert id="insert" parameterClass="com.distribute.tx.test.vo.User">
+    insert into user (user_id,username, prov_id, city_id, cust_id)
+    values (#userId:Long#,#username:VARCHAR#, #provId:VARCHAR#, #cityId:VARCHAR#,#custId:Long#)
+  </insert>
+  
+</sqlMap>

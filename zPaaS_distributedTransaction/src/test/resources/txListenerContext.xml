@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+	<!-- <bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.1.228.198:39181,10.1.228.199:39181,10.1.228.200:39181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value=""/>
+    </bean>-->
+    
+    <bean id="cc" class="com.zpaas.client.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+    </bean>
+     
+    <bean id="transactionPublisher" class="com.distribute.tx.transaction.TransactionPublisher" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/tx/transactionPublisher"/>
+    </bean>
+    <bean id="transactionSubSample" class="com.distribute.tx.test.TransactionSubSample">
+    	<property name="tt" ref="transactionTemplate"/>
+    	<property name="userDao" ref="userDao"/>
+    	<property name="userSeq" ref="user_seq"/>
+    </bean>
+    <bean id="transactionListenerManager" class="com.distribute.tx.eventual.TransactionListenerManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="listener" ref="transactionSubSample"/>
+        <property name="publisher" ref="transactionPublisher"/>
+        <property name="confPath" value="/com/zpaas/tx/transactionListenerManager"/>
+        <property name="participant" value="sample_group"/>
+        <property name="transactionList">
+	        <list>
+	        	<value>business-topic</value>
+	        </list>
+        </property>
+    </bean>
+    
+    <bean id="userDao"
+		class="com.distribute.tx.test.dao.impl.UserDAOImpl">
+		<property name="sqlMapClient" ref="sqlMapClient" />
+	</bean>
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref local="testDB" />
+		</property>
+	</bean>
+	<bean id="transactionTemplate"
+		class="org.springframework.transaction.support.TransactionTemplate">
+		<property name="transactionManager">
+			<ref local="transactionManager" />
+		</property>
+	</bean>
+	<bean id="sqlMapClient" class="org.springframework.orm.ibatis.SqlMapClientFactoryBean">
+		<property name="configLocation">
+			<value>classpath:/sqlMapConfig-test.xml</value>
+		</property>
+		<property name="dataSource">
+			<ref bean="testDB" />
+		</property>
+	</bean>
+	<bean id="testDB" class="com.db.distribute.DistributedDataSource" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/db_cust"/>
+        <property name="fileManager" ref="fileManager"/>
+    </bean>
+    <bean id="fileManager" class="com.zpaas.client.file.MongoFileManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/file/conf"/>
+    </bean>
+    
+    <bean id="sequenceService1" class="com.db.sequence.SequenceServiceImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/sequence"/>
+        <property name="sequenceTable" value="sequence"/>
+        <property name="range" value="1000"/>
+    </bean>
+    <bean id="user_seq" class="com.db.sequence.Sequence" >
+        <property name="service" ref="sequenceService1"/>
+        <property name="sequenceName" value="user_seq"/>
+    </bean>
+</beans>
