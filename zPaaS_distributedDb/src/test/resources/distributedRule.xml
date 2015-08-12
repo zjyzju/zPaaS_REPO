@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="P"/>
+        <constructor-arg value="UTF-8"/>
+        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+    </bean>
+	<bean id="sqlCache" class="com.zpaas.cache.remote.RemoteCacheSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/cache/sqlCache"/>
+    </bean>
+    
+	<bean id="group_cust_01" class="com.zpaas.db.logic.LogicDBDataSource" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/group_cust_01"/>
+    </bean>
+    
+    <bean id="group_cust_02" class="com.zpaas.db.logic.LogicDBDataSource" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/group_cust_02"/>
+    </bean>
+    
+    <bean id="cityMap_db" class="org.springframework.beans.factory.config.MapFactoryBean">  
+	  <property name="sourceMap">  
+	      <map>  
+	        <entry key="10" value="1"/>  
+		    <entry key="21" value="1"/>  
+		    <entry key="576" value="2"/>  
+		    <entry key="571" value="2"/>  
+	      </map>  
+	  </property>  
+	</bean> 
+    <bean id="cityMap_tb" class="org.springframework.beans.factory.config.MapFactoryBean">  
+	  <property name="sourceMap">  
+	      <map>  
+	        <entry key="10" value="1"/>  
+		    <entry key="21" value="2"/>  
+		    <entry key="576" value="3"/>  
+		    <entry key="571" value="4"/>
+	      </map>  
+	  </property>  
+	</bean>
+	
+    <bean id="dbRule" class="com.zpaas.db.distribute.DistributedDBRule"
+		init-method="init">
+		<property name="dbType" value="MYSQL" />
+		<property name="tableRules">
+			<map>
+				<entry key="cust" value-ref="cust" />
+				<entry key="service_number" value-ref="service_number" />
+				<entry key="cust_tenant" value-ref="cust_tenant" />
+				<entry key="user" value-ref="user" />
+				<entry key="defaultRule" value-ref="defaultRule" />
+			</map>
+		</property>
+		<property name="mappingRules">
+			<map>
+				<entry key="cityMap_db" value-ref="cityMap_db" />
+				<entry key="cityMap_tb" value-ref="cityMap_tb" />
+			</map>
+		</property>
+		<property name="cacheSvc" ref="sqlCache"/>
+		<property name="multiTenantMode" value="false" /><!-- 多租户模式：false:关闭；multiUser:用户隔离模式；oneUser1:单用户，字段隔离模式，查检条件模式; oneUser2:单用户，字段隔离模式,自动增加条件模式-->
+		<property name="allowFullTenantScan" value="false" /><!-- 是否允许访问多个租户的数据 -->
+	</bean>
+	<bean id="defaultRule" class="com.zpaas.db.distribute.DistributedTableRule">
+		<property name="distributeKey" value="id" />
+		<property name="logicDBPattern" value="group_cust_{00}" />
+		<property name="tableNamePattern" value="cust_{0000}" />
+		<property name="tableNameRule">
+			<value>{keyValue:{keyColumn:'id', tranferType:'java.lang.Long', operator:'%',operatorValue:4}, operator:'+',operatorValue:1} </value>
+		</property>
+		<property name="logicDBRule">
+			<value>{keyValue:{keyValue:{keyColumn:'id', tranferType:'java.lang.Long', operator:'%',operatorValue:4},operator:'/', operatorValue:2},operator:'+', operatorValue:1} </value>
+		</property>
+		<property name="allowFullTableScan" value="true" />
+		<property name="subTableCount" value="4" />
+	</bean>
+	<bean id="cust" class="com.zpaas.db.distribute.DistributedTableRule">
+		<property name="distributeKey" value="cust_id" />
+		<property name="logicDBPattern" value="group_cust_{00}" />
+		<property name="tableNamePattern" value="cust_{0000}" />
+		<property name="tableNameRule">
+			<value>{keyValue:{keyColumn:'cust_id', tranferType:'java.lang.Long', operator:'%',operatorValue:4}, operator:'+',operatorValue:1} </value>
+		</property>
+		<property name="logicDBRule">
+			<value>{keyValue:{keyValue:{keyColumn:'cust_id', tranferType:'java.lang.Long', operator:'%',operatorValue:4},operator:'/', operatorValue:2},operator:'+', operatorValue:1} </value>
+		</property>
+		<property name="allowFullTableScan" value="true" />
+		<property name="subTableCount" value="4" />
+	</bean>
+	<bean id="cust_tenant" class="com.zpaas.db.distribute.DistributedTableRule">
+		<property name="distributeKey" value="cust_id" />
+		<property name="logicDBPattern" value="group_cust_{00}" />
+		<property name="tableNamePattern" value="cust_tenant_{0000}" />
+		<property name="tableNameRule">
+			<value>{keyValue:{keyColumn:'cust_id', tranferType:'java.lang.Long', operator:'%',operatorValue:4}, operator:'+',operatorValue:1} </value>
+		</property>
+		<property name="logicDBRule">
+			<value>{keyValue:{keyValue:{keyColumn:'cust_id', tranferType:'java.lang.Long', operator:'%',operatorValue:4},operator:'/', operatorValue:2},operator:'+', operatorValue:1} </value>
+		</property>
+		<property name="allowFullTableScan" value="true" />
+		<property name="subTableCount" value="4" />
+		<property name="tenantColumn" value="tenant_id" /><!-- 用户隔离模式下，不需要配置该条 -->
+	</bean>
+	<bean id="service_number" class="com.zpaas.db.distribute.DistributedTableRule">
+		<property name="distributeKey" value="city_id" />
+		<property name="logicDBPattern" value="group_cust_{00}" />
+		<property name="tableNamePattern" value="service_number_{0000}" />
+		<property name="tableNameRule">
+			<value>{keyColumn:'city_id', tranferType:'java.lang.String', operator:'Mapping',operatorValue:'cityMap_tb'} </value>
+		</property>
+		<property name="logicDBRule">
+			<value>{keyColumn:'city_id', tranferType:'java.lang.String', operator:'Mapping',operatorValue:'cityMap_db'} </value>
+		</property>
+		<property name="allowFullTableScan" value="true" />
+		<property name="subTableCount" value="4" />
+	</bean>
+	<bean id="user" class="com.zpaas.db.distribute.DistributedTableRule">
+		<property name="distributeKey" value="prov_id,city_id" />
+		<property name="logicDBPattern" value="group_cust_{00}" />
+		<property name="tableNamePattern" value="user_{0000}" />
+		<property name="tableNameRule">
+			<value>{keyValue:{keyColumn:'prov_id,city_id', tranferType:'com.zpaas.db.util.ConcatStringHash', operator:'%',operatorValue:4}, operator:'+',operatorValue:1} </value>
+		</property>
+		<property name="logicDBRule">
+			<value>{keyValue:{keyValue:{keyColumn:'prov_id,city_id', tranferType:'com.zpaas.db.util.ConcatStringHash', operator:'%',operatorValue:4},operator:'/', operatorValue:2},operator:'+', operatorValue:1} </value>
+		</property>
+		<property name="allowFullTableScan" value="false" />
+		<property name="subTableCount" value="4" />
+	</bean>
+</beans>

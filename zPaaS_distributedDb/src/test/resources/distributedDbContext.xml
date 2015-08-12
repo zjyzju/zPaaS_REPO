@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  	<bean id="cc" class="com.zpaas.client.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="P"/>
+        <constructor-arg value="UTF-8"/>
+        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+    </bean>
+ 
+  	<bean id="multi_tenant_db" class="com.zpaas.db.tenant.MultiTenantDataSource" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/multi_tenant_db"/>
+        <property name="fileManager" ref="fileManagerSVC"/>
+    </bean> 
+	
+	<bean id="db_cust" class="com.zpaas.db.distribute.DistributedDataSource" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/db_cust"/>
+        <property name="fileManager" ref="fileManagerSVC"/>
+    </bean>
+    
+    <bean id="db_common" class="com.zpaas.db.logic.LogicDBDataSource" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/db_common"/>
+    </bean>
+    
+    <bean id="fileManagerSVC" class="com.zpaas.file.MongoFileManagerSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/file/fileManagerSVC"/>
+    </bean>
+    
+    <bean id="sqlCache" class="com.zpaas.cache.remote.RemoteCacheSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/cache/sqlCache"/>
+    </bean>
+    
+    <bean id="sequenceService" class="com.zpaas.db.sequence.SequenceServiceImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/sequence"/>
+        <property name="sequenceTable" value="sequence"/>
+        <property name="range" value="1000"/>
+    </bean>
+    <bean id="cust_id_seq" class="com.zpaas.db.sequence.Sequence" >
+        <property name="service" ref="sequenceService"/>
+        <property name="sequenceName" value="cust_id_seq"/>
+    </bean>
+    <bean id="service_number_seq" class="com.zpaas.db.sequence.Sequence" >
+        <property name="service" ref="sequenceService"/>
+        <property name="sequenceName" value="service_number_seq"/>
+    </bean>
+    <bean id="user_seq" class="com.zpaas.db.sequence.Sequence" >
+        <property name="service" ref="sequenceService"/>
+        <property name="sequenceName" value="user_seq"/>
+    </bean>
+    
+</beans>
