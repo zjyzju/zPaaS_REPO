@@ -33,6 +33,8 @@ import com.zpaas.db.sql.parser.SQLParser.In_predicateContext;
 import com.zpaas.db.sql.parser.SQLParser.In_predicate_valueContext;
 import com.zpaas.db.sql.parser.SQLParser.In_value_listContext;
 import com.zpaas.db.sql.parser.SQLParser.Numeric_value_expressionContext;
+import com.zpaas.db.sql.parser.SQLParser.Pattern_matcherContext;
+import com.zpaas.db.sql.parser.SQLParser.Pattern_matching_predicateContext;
 import com.zpaas.db.sql.parser.SQLParser.Row_value_predicandContext;
 import com.zpaas.db.sql.parser.SQLParser.Set_function_typeContext;
 import com.zpaas.db.sql.parser.SQLParser.Table_nameContext;
@@ -125,7 +127,7 @@ public class SqlParser {
 				Table table = new Table();
 				table.setTableName(child.getText());
 				tables.add(table);
-			} else if (child instanceof Comparison_predicateContext) {// 解析select语句包括select子查询中的条件列
+			} else if (child instanceof Comparison_predicateContext || child instanceof Pattern_matching_predicateContext) {// 解析select语句包括select子查询中的条件列
 				Column column = new Column();
 				columns.add(column);
 				boolean right = false;
@@ -138,7 +140,7 @@ public class SqlParser {
 						} else {//右值时作为条件比较值
 							column.setValue(child.getChild(j).getText());
 						}
-					} else if (child.getChild(j) instanceof Comp_opContext) {//条件比较操作符
+					} else if (child.getChild(j) instanceof Comp_opContext || child.getChild(j) instanceof Pattern_matcherContext) {//条件比较操作符
 						column.setOperator(child.getChild(j).getText());
 						parseSqlTree(child.getChild(j), ctx);
 					}
@@ -246,7 +248,7 @@ public class SqlParser {
 					}
 				}
 			} else {
-//				if (child instanceof Comparison_predicateContext) {
+//				if (child instanceof Pattern_matching_predicateContext) {
 //					for (int j = 0; j < child.getChildCount(); j++) {
 //						System.out.println(child.getChild(j).getClass());
 //						System.out.println(child.getChild(j).getText());
@@ -273,7 +275,8 @@ public class SqlParser {
 //		String sql = "DROP TABLE `cust`";
 //		String sql = "insert into iuy_acct_prod_voting (acct_voting_id, acct_id, object_type, object_id, voting_type,       voting_date, comments)     values (1, 2, 3, 4,       5, 6, 7)  ";
 //		String sql = "show tables";
-		String sql = "select count(*) from (select 1 from iuy_order_main                                   limit 0,10) b";
+//		String sql = "select count(*) from (select 1 from iuy_order_main                                   limit 0,10) b";
+		String sql = "select * from (select t_1.*,rownum as row_num from (select log_id, log_info, db_code from t_demo_log  where (  db_code like question_mark_1 and log_info is not null )  ) t_1 where rownum<=2 + 3) t_2 where t_2.row_num>2";
 		parseSql(sql);
 	}
 }
