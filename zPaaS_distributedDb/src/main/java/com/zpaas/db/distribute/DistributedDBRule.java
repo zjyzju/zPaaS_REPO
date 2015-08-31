@@ -594,13 +594,13 @@ public class DistributedDBRule {
 			}
 			int right = (Integer) rightValue;
 			if ("%".equals(operator)) {
-				return (int) left % right;
+				return (int) (left % right);
 			} else if ("/".equals(operator)) {
-				return (int) left / right;
+				return (int) (left / right);
 			} else if ("+".equals(operator)) {
-				return (int) left + right;
+				return (int) (left + right);
 			} else if ("-".equals(operator)) {
-				return (int) left - right;
+				return (int) (left - right);
 			} else {
 				return null;
 			}
