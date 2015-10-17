@@ -36,6 +36,8 @@
                 </includes>
                 <excludes>
                 	<exclude>log4j.xml</exclude>
+                	<exclude>paasContext.xml</exclude>
+                	<exclude>distributedRule.xml</exclude>
                 </excludes>
             </resource>
         </resources>
