@@ -9,14 +9,14 @@
         ">
 	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
 		<constructor-arg
-			value="192.168.1.91:2181,192.168.1.92:2181,192.168.1.93:2181" />
+			value="localhost:2181" />
 		<constructor-arg value="P" />
 		<property name="auth"
 			value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf" />
 	</bean>
 	
 	<dubbo:application name="zPaaS_service_template" />
-	<dubbo:registry protocol="zookeeper" address="192.168.1.91:2181,192.168.1.92:2181,192.168.1.93:2181" />
+	<dubbo:registry protocol="zookeeper" address="localhost:2181" />
 	<dubbo:provider timeout="20000" retries="0" />
 	<dubbo:protocol name="dubbo" port="20880" />
 	<!--<dubbo:monitor protocol="registry" /> -->
@@ -59,7 +59,7 @@
 	<bean id="transactionManager"
 		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
 		<property name="dataSource">
-			<ref local="iuydb" />
+			<ref local="zpaasdb" />
 		</property>
 	</bean>
 	<bean id="transactionTemplate"
@@ -73,13 +73,13 @@
 			<value>classpath:/sqlMapConfig.xml</value>
 		</property>
 		<property name="dataSource">
-			<ref bean="iuydb" />
+			<ref bean="zpaasdb" />
 		</property>
 	</bean>
-	<bean id="iuydb" class="com.zpaas.db.distribute.DistributedDataSource"
+	<bean id="zpaasdb" class="com.zpaas.db.distribute.DistributedDataSource"
 		init-method="init">
 		<property name="cc" ref="cc" />
-		<property name="confPath" value="/zpaas/iuydb/iuy_db" />
+		<property name="confPath" value="/zpaas/db/zpaas_db" />
 		<property name="fileManager" ref="fileSVC" />
 	</bean>
 	<bean id="fileSVC" class="com.zpaas.file.MongoFileManagerSVCImpl"
@@ -90,7 +90,7 @@
 	<bean id="sequenceService" class="com.zpaas.db.sequence.SequenceServiceImpl"
 		init-method="init">
 		<property name="cc" ref="cc" />
-		<property name="confPath" value="/zpaas/iuydb/sequence" />
+		<property name="confPath" value="/zpaas/db/sequence" />
 		<property name="sequenceTable" value="sequence" />
 		<property name="range" value="1000" />
 	</bean>

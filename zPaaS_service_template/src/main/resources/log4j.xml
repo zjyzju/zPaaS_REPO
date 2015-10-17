@@ -21,7 +21,7 @@
     	<param name="logTopic" value="paas_log_mongo_topic"/> 
     	<param name="appName" value="zpaas_template"/> 
     	<param name="confPath" value="/zpaas/message/logMessageSender"/> 
-    	<param name="ccAddr" value="192.168.1.91:2181,192.168.1.92:2181,192.168.1.93:2181"/>
+    	<param name="ccAddr" value="localhost:2181"/>
     	<param name="runMod" value="P"/> 
     	<param name="auth" value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf"/> 
     	<layout class="org.apache.log4j.PatternLayout"> 

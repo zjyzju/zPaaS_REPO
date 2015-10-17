@@ -1,0 +1,14 @@
+package com.sample.rule
+import com.sample.po.Transaction
+
+rule "zpaasRule"
+	no-loop true
+	when
+		transaction : Transaction();
+	then
+		if(transaction.getParticipantNum() > 0) {
+			transaction.setParticipants("have participant");
+		}else {
+			transaction.setParticipants("no participant");
+		}
+end

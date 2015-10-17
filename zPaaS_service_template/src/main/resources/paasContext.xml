@@ -9,7 +9,7 @@
         ">
     <!-- 统一配置中心 -->
 	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
-        <constructor-arg value="192.168.1.91:2181,192.168.1.92:2181,192.168.1.93:2181"/>
+        <constructor-arg value="localhost:2181"/>
         <constructor-arg value="P"/>
         <property name="auth" value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf"/>
     </bean>
@@ -49,11 +49,16 @@
         <property name="confPath" value="/zpaas/file/secureFileSVC"/>
     </bean>
     
-    <!-- 规则文件服务 -->
+    <!-- 规则服务 -->
     <bean id="ruleFileSVC" class="com.zpaas.file.MongoFileManagerSVCImpl" init-method="init">
         <property name="cc" ref="cc"/>
         <property name="confPath" value="/zpaas/file/ruleFileSVC"/>
     </bean>
+    <bean id="zpaasRule" class="com.zpaas.rule.DroolsRuleSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="ruleRepo" ref="ruleFileSVC"/>
+        <property name="confPath" value="/zpaas/rule/ruleSVC"/>
+    </bean> 
     
     <!-- 远程缓存服务 -->
     <bean id="remoteCacheSVC" class="com.zpaas.cache.remote.RemoteCacheSVCImpl" init-method="init">
@@ -71,6 +76,17 @@
     <bean id="desCipherSVC" class="com.zpaas.security.cipher.DesCipherSVCImpl" init-method="init">
         <property name="cc" ref="cc"/>
         <property name="confPath" value="/zpaas/security/desCipherSVC"/>
+        <property name="secureFileRepo" ref="secureFileSVC"/>
+    </bean>
+    <!-- 签名验签服务 -->
+    <bean id="signatureSVC" class="com.zpaas.security.signature.SHA1WithRSASignatureSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/security/SHA1WithRSASignatureSVC"/>
+        <property name="secureFileRepo" ref="secureFileSVC"/>
+    </bean>   
+    <bean id="signatureMgr" class="com.zpaas.security.signature.SignatureSVCManager" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/security/signatureSVCManager"/>
         <property name="secureFileRepo" ref="secureFileSVC"/>
     </bean>
 </beans>

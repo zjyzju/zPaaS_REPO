@@ -2,7 +2,7 @@
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
 <beans>
   	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
-        <constructor-arg value="192.168.1.91:2181,192.168.1.92:2181,192.168.1.93:2181"/>
+        <constructor-arg value="localhost:2181"/>
         <constructor-arg value="P"/>
         <property name="auth" value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf"/>
     </bean>
@@ -12,24 +12,14 @@
         <property name="confPath" value="/zpaas/cache/sqlCacheSVC"/>
     </bean>
     
-	<bean id="logic_iuydb_01" class="com.zpaas.db.logic.LogicDBDataSource" init-method="init">
+	<bean id="logic_zpaas_db1" class="com.zpaas.db.logic.LogicDBDataSource" init-method="init">
         <property name="cc" ref="cc"/>
-        <property name="confPath" value="/zpaas/iuydb/logic_iuydb_01"/>
+        <property name="confPath" value="/zpaas/db/logic_zpaas_db1"/>
     </bean>
     
-    <bean id="logic_iuydb_02" class="com.zpaas.db.logic.LogicDBDataSource" init-method="init">
+    <bean id="logic_zpaas_db2" class="com.zpaas.db.logic.LogicDBDataSource" init-method="init">
         <property name="cc" ref="cc"/>
-        <property name="confPath" value="/zpaas/iuydb/logic_iuydb_02"/>
-    </bean>
-    
-    <bean id="logic_iuydb_03" class="com.zpaas.db.logic.LogicDBDataSource" init-method="init">
-        <property name="cc" ref="cc"/>
-        <property name="confPath" value="/zpaas/iuydb/logic_iuydb_03"/>
-    </bean>
-    
-    <bean id="logic_iuydb_04" class="com.zpaas.db.logic.LogicDBDataSource" init-method="init">
-        <property name="cc" ref="cc"/>
-        <property name="confPath" value="/zpaas/iuydb/logic_iuydb_04"/>
+        <property name="confPath" value="/zpaas/db/logic_zpaas_db2"/>
     </bean>
     
     <bean id="dbRule" class="com.zpaas.db.distribute.DistributedDBRule"
@@ -44,15 +34,15 @@
 	</bean>
 	<bean id="transaction" class="com.zpaas.db.distribute.DistributedTableRule">
 		<property name="distributeKey" value="name" />
-		<property name="logicDBPattern" value="logic_iuydb_{00}" />
+		<property name="logicDBPattern" value="logic_zpaas_db{0}" />
 		<property name="tableNamePattern" value="transaction_{0000}" />
 		<property name="tableNameRule">
-			<value>{keyValue:{keyColumn:'name', tranferType:'com.zpaas.db.common.StringHash', operator:'%',operatorValue:16}, operator:'+',operatorValue:1} </value>
+			<value>{keyValue:{keyColumn:'name', tranferType:'com.zpaas.db.common.StringHash', operator:'%',operatorValue:4}, operator:'+',operatorValue:1} </value>
 		</property>
 		<property name="logicDBRule">
-			<value>{keyValue:{keyValue:{keyColumn:'name', tranferType:'com.zpaas.db.common.StringHash', operator:'%',operatorValue:16},operator:'/', operatorValue:4},operator:'+', operatorValue:1} </value>
+			<value>{keyValue:{keyValue:{keyColumn:'name', tranferType:'com.zpaas.db.common.StringHash', operator:'%',operatorValue:4},operator:'/', operatorValue:2},operator:'+', operatorValue:1} </value>
 		</property>
 		<property name="allowFullTableScan" value="true" />
-		<property name="subTableCount" value="16" />
+		<property name="subTableCount" value="4" />
 	</bean>
 </beans>
