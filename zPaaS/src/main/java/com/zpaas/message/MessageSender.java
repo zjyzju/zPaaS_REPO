@@ -93,6 +93,15 @@ public class MessageSender implements ConfigurationWatcher {
 		KeyedMessage<String, Message> km = new KeyedMessage<String, Message>(topic,String.valueOf(msg.getId()), msg);
 		producer.send(km);
 	}
+	
+	public void sendMessage(Object message, String topic, String key) {
+		Message msg = new Message();
+		msg.setId(getRandomId());
+		msg.setTopic(topic);
+		msg.setMsg(message);
+		KeyedMessage<String, Message> km = new KeyedMessage<String, Message>(topic,key, msg);
+		producer.send(km);
+	}
 
 	public String getConfPath() {
 		return confPath;
