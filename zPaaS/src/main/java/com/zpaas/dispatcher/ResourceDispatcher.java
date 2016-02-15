@@ -134,7 +134,11 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 		try {
 			if (changed) {
 				if (zkServer != null) {
-					zk = new ZooKeeper(zkServer, 6000, null);
+					zk = new ZooKeeper(zkServer, 6000, new Watcher() {
+						public void process(WatchedEvent arg0) {
+							//none
+						}
+					});
 					createPath();
 					startService();
 					if (selectLeaderThread != null) {
