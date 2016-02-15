@@ -97,7 +97,7 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpcore</artifactId>
-			<version>4.0</version>
+			<version>4.4</version>
 		</dependency>
 		<dependency>
 			<groupId>redis.clients</groupId>
@@ -158,7 +158,7 @@
 		<dependency>
 			<groupId>com.101tec</groupId>
 			<artifactId>zkclient</artifactId>
-			<version>0.3</version>
+			<version>0.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.zookeeper</groupId>
