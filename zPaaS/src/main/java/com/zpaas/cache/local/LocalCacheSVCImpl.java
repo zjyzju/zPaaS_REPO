@@ -60,6 +60,10 @@ public class LocalCacheSVCImpl implements ConfigurationWatcher,LocalCacheSVC {
 	public JSONArray getCacheItemJSONArray(String key) {
 		return cache.getJSONArray(key);
 	}
+	
+	public boolean setCacheInfo(JSONObject cacheInfo) {
+		return cc.setData(confPath, cacheInfo.toString());
+	}
 
 	public ConfigurationCenter getCc() {
 		return cc;

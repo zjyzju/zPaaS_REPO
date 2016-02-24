@@ -11,4 +11,6 @@ public interface LocalCacheSVC {
 	public JSONObject getCacheItemJSONObject(String key);
 	
 	public JSONArray getCacheItemJSONArray(String key);
+	
+	public boolean setCacheInfo(JSONObject cacheInfo);
 }
