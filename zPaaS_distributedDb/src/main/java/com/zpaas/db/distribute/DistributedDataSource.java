@@ -28,6 +28,7 @@ import com.zpaas.file.FileManagerSVC;
  * @date 2014年6月23日 上午9:54:49 
  * @version V1.0
  */
+@SuppressWarnings("deprecation")
 public class DistributedDataSource implements DataSource, ConfigurationWatcher {
 	public static final Logger log = Logger.getLogger(DistributedDataSource.class);
 	public static final HashMap<String, LogicDBDataSource> logicDBMap = new HashMap<String, LogicDBDataSource>();

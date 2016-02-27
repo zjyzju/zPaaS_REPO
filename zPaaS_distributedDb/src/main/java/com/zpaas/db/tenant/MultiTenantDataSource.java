@@ -27,6 +27,7 @@ import net.sf.json.JSONObject;
  * @date 2014年6月23日 上午9:58:04 
  * @version V1.0
  */
+@SuppressWarnings("deprecation")
 public class MultiTenantDataSource implements DataSource, ConfigurationWatcher {
 	public static final Logger log = Logger.getLogger(MultiTenantDataSource.class);
 	private String multiTenantDB;
