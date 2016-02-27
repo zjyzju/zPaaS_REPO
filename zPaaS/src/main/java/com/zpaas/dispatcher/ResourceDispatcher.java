@@ -134,11 +134,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 		try {
 			if (changed) {
 				if (zkServer != null) {
-					zk = new ZooKeeper(zkServer, 6000, new Watcher() {
-						public void process(WatchedEvent arg0) {
-							//none
-						}
-					});
+					zk = new ZooKeeper(zkServer, 6000, wh);
 					createPath();
 					startService();
 					if (selectLeaderThread != null) {
@@ -174,7 +170,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 		}
 		Stat stat = null;
 		try {
-			stat = zk.exists(ROOT_PATH, true);
+			stat = zk.exists(ROOT_PATH, false);
 		} catch (Exception e) {
 		}
 		if (stat == null) {
@@ -185,7 +181,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 		}
 
 		try {
-			stat = zk.exists(domainPath, true);
+			stat = zk.exists(domainPath, false);
 		} catch (Exception e) {
 		}
 		if (stat == null) {
@@ -207,7 +203,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 		}
 
 		try {
-			stat = zk.exists(domainPath + OWNER_PATH1, true);
+			stat = zk.exists(domainPath + OWNER_PATH1, false);
 		} catch (Exception e) {
 		}
 		if (stat == null) {
@@ -224,7 +220,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			log.debug("begin to select leader...");
 		}
 		try {
-			Stat stat = zk.exists(domainPath + LEADER_PATH, wh);
+			Stat stat = zk.exists(domainPath + LEADER_PATH, true);
 			String newLeader = null;
 			if (stat == null) {
 				newLeader = zk.create(domainPath + LEADER_PATH, nodeName.getBytes(), Ids.OPEN_ACL_UNSAFE,
@@ -253,6 +249,19 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 	}
 
 	public void dispatchResource() {
+		List<String> servers = null;
+		try {
+			servers = zk.getChildren(domainPath + EXECUTOR_PATH, true);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		if (log.isDebugEnabled()) {
+			log.debug("new servers:" + servers);
+		}
+		
+		if(servers == null || servers.size() == 0) {
+			return;
+		}
 		synchronized (lock2) {
 
 			if (!isLeader) {
@@ -261,32 +270,91 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			if (log.isDebugEnabled()) {
 				log.debug("begin to dispatch resource");
 			}
-			List<String> children = null;
-			try {
-				children = zk.getChildren(domainPath + EXECUTOR_PATH, wh);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-			}
-			if (log.isDebugEnabled()) {
-				log.debug("new servers:" + children);
-			}
-			HashMap<String, String> owners = new HashMap<String, String>();
-			for (int i = 0; i < resourceAmount; i++) {
-				String resource = resourceArray.getString(i);
-				byte[] ownerByte = null;
+			
+			HashMap<String, JSONArray> lastAllocMap = new HashMap<>();
+			for(String server : servers) {
+				byte[] resourceByte = null;
 				try {
-					ownerByte = zk.getData(domainPath + OWNER_PATH + resource, true, null);
+					String serverNode = domainPath + EXECUTOR_PATH + "/" + server;
+					if(nodeName.equals(serverNode)) {
+						resourceByte = zk.getData(serverNode, true, null);	
+					}else {
+						resourceByte = zk.getData(serverNode, false, null);			
+					}
 				} catch (Exception e) {
-				}
-				if (ownerByte != null) {
-					String owner = new String(ownerByte);
-					owners.put(resource, owner);
+				}				
+				if (resourceByte != null) {
+					lastAllocMap.put(server, JSONArray.fromObject(new String(resourceByte)));
+				}else {
+					lastAllocMap.put(server, null);
 				}
 			}
+			
+			//lastAllocMap is controlled by leader, can be used to judge whether has last resource occupying finished.
+			//if last resource occupying not finish, wait until it finish.
 			if (log.isDebugEnabled()) {
-				log.debug("current resource owner: " + owners);
+				log.debug("lastAllocMap:" + lastAllocMap);
 			}
-			dispatcher(children, owners);
+			boolean lastFinished = true;
+			HashMap<String, String> owners = null;
+			int retry = 0;
+			do {
+				lastFinished = true;
+				owners = new HashMap<>();
+				HashMap<String, JSONArray> occupyMap = new HashMap<>();
+				for (int i = 0; i < resourceAmount; i++) {
+					String resource = resourceArray.getString(i);
+					byte[] ownerByte = null;
+					try {
+						ownerByte = zk.getData(domainPath + OWNER_PATH + resource, false, null);
+					} catch (Exception e) {
+					}
+					if (ownerByte != null) {
+						String owner = new String(ownerByte);
+						String server = owner.replace(domainPath + EXECUTOR_PATH1, "");
+						JSONArray serverResources = occupyMap.get(server);
+						if (serverResources == null) {
+							serverResources = new JSONArray();
+							occupyMap.put(server, serverResources);
+						}
+						serverResources.add(resource);
+						owners.put(resource, owner);
+					}
+				}
+				if (log.isDebugEnabled()) {
+					log.debug("current resource owner: " + owners);
+					log.debug("current occupyMap: " + occupyMap);
+				}
+				for(String server : lastAllocMap.keySet()) {
+					JSONArray allocServerResources = lastAllocMap.get(server);
+					if(allocServerResources == null) {
+						continue;
+					}
+					JSONArray serverResources = occupyMap.get(server);
+					if(allocServerResources.containsAll(serverResources) && serverResources.containsAll(allocServerResources)) {
+						continue;
+					}else {
+						lastFinished = false;
+						break;
+					}
+				}
+				if(!lastFinished) {
+					retry++;
+					if(retry >= 5) {
+						log.error("Have Waited for last resource occupying finish for max times, break.");
+						break;
+					}
+					if(log.isInfoEnabled()) {
+						log.info("Waiting for last resource occupying finish for times: " + retry);
+					}
+					try {
+						Thread.sleep(2000*retry);
+					} catch (Exception e) {
+					}
+				}
+			} while(!lastFinished);
+			
+			dispatcher(servers, owners);
 			
 		}
 		if (log.isDebugEnabled()) {
@@ -352,46 +420,68 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 				log.debug("free resource: " + free);
 			}
 
-			int k = mod;
-			for (String server : old.keySet()) {
-				ArrayList<String> resources = old.get(server);
-				int size = resources.size();
-				if (size == count) {
-					if (k > 0 && free.size() > 0) {
-						k--;
-						resources.add(free.remove(free.size() - 1));
-					}
-				} else if (size == count + 1) {
-					if (k > 0) {
-						k--;
-					} else {
-						free.add(resources.remove(size - 1));
-					}
-				} else if (size > count + 1) {
-					if (k > 0) {
-						k--;
-						for (int i = size - 1; i > count; i--) {
-							free.add(resources.remove(i));
+			
+			int tryTimes = 1;
+			do {
+				int k = mod;
+				tryTimes++;
+				for (String server : old.keySet()) {
+					ArrayList<String> resources = old.get(server);
+					int size = resources.size();
+					if (size == count) {
+						if (k > 0 && free.size() > 0) {
+							k--;
+							resources.add(free.remove(free.size() - 1));
+						}
+					} else if (size == count + 1) {
+						if (k > 0) {
+							k--;
+						} else {
+							free.add(resources.remove(size - 1));
+						}
+					} else if (size > count + 1) {
+						if (k > 0) {
+							k--;
+							for (int i = size - 1; i > count; i--) {
+								free.add(resources.remove(i));
+							}
+						} else {
+							for (int i = size - 1; i >= count; i--) {
+								free.add(resources.remove(i));
+							}
 						}
 					} else {
-						for (int i = size - 1; i >= count; i--) {
-							free.add(resources.remove(i));
-						}
-					}
-				} else {
-					int freeSize = free.size();
-					if (k > 0 && free.size() > 0) {
-						k--;
-						for (int i = freeSize - 1; i > freeSize - 1 - (count + 1 - size); i--) {
-							resources.add(free.remove(i));
-						}
-					} else {
-						for (int i = freeSize - 1; i > freeSize - 1 - (count - size); i--) {
-							resources.add(free.remove(i));
+						int freeSize = free.size();
+						if (k > 0) {
+							if(freeSize >= (count + 1 - size)) {
+								k--;
+								for (int i = freeSize - 1; i > freeSize - 1 - (count + 1 - size); i--) {
+									resources.add(free.remove(i));
+								}
+							}else if(freeSize >= (count - size)) {
+								for (int i = freeSize - 1; i > freeSize - 1 - (count - size); i--) {
+									resources.add(free.remove(i));
+								}
+							}else if(freeSize > 0 && freeSize < (count - size)) {
+								for (int i = freeSize - 1; i >= 0; i--) {
+									resources.add(free.remove(i));
+								}
+							}						
+						} else {
+							if(freeSize >= (count - size)) {
+								for (int i = freeSize - 1; i > freeSize - 1 - (count - size); i--) {
+									resources.add(free.remove(i));
+								}
+							}else if(freeSize > 0 && freeSize < (count - size)) {
+								for (int i = freeSize - 1; i >= 0; i--) {
+									resources.add(free.remove(i));
+								}
+							}
 						}
 					}
 				}
-			}
+			} while(tryTimes <=2);//try two times for abnormal condition
+			
 
 			if (log.isDebugEnabled()) {
 				log.debug("new allocated resource: " + old);
@@ -456,20 +546,24 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			log.debug(nodeName + ":" + node + " start to provide service.");
 		}
 
-		zk.getData(nodeName, wh, null);
+		zk.getData(nodeName, true, null);
 	}
 
 	@SuppressWarnings("unchecked")
 	public void occupyResource() {
+		String tmp = null;
+		try {
+			tmp = new String(zk.getData(nodeName, true, null));
+		} catch (Exception e2) {
+			log.error(e2.getMessage(),e2);
+		} 
+		JSONArray occupyResource = JSONArray.fromObject(tmp);
 		synchronized (lock1) {
-
-			try {
-				String tmp = new String(zk.getData(nodeName, wh, null));
-				JSONArray occupyResource = JSONArray.fromObject(tmp);
+			try {				
 				if (log.isDebugEnabled()) {
 					log.debug("begin to occupy resource:" + occupyResource);
 				}
-				executor.prepareResourceAllocate(occupyResource);
+				executor.prepareResourceAllocate(JSONArray.fromObject(tmp));//修改成新的对象，避免executor修改后造成影响
 
 				ArrayList<Object> left = new ArrayList<Object>();
 				if (occupiedResource != null) {
@@ -513,7 +607,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 								}
 								zk.delete(node, -1);
 							} catch (Exception e) {
-
+								log.error(e.getMessage(), e);
 							}
 						}
 					}
@@ -548,7 +642,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 							
 							String oldOwner = null;
 							try {
-								oldOwner = new String(zk.getData(occupyNode, wh, null));
+								oldOwner = new String(zk.getData(occupyNode, false, null));
 							} catch (Exception e1) {
 							}
 							if (nodeName.equals(oldOwner)) {
@@ -558,8 +652,8 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 							String newRes = null;
 							String oldRes = null;
 							try {
-								newRes = new String(zk.getData(nodeName, wh, null));
-								oldRes = new String(zk.getData(oldOwner, wh, null));
+								oldRes = new String(zk.getData(oldOwner, false, null));
+								newRes = new String(zk.getData(nodeName, true, null));								
 							} catch (Exception e1) {
 							}
 							if(oldRes != null) {

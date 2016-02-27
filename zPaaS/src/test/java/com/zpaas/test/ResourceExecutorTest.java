@@ -25,7 +25,7 @@ public class ResourceExecutorTest implements ResourceExecutor {
 		synchronized(lock) {
 			System.out.println("prepareResourceAllocate:" + resources);
 			try {
-				Thread.sleep(3*1000);
+				Thread.sleep(8*1000);
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

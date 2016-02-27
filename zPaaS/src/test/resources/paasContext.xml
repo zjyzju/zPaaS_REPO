@@ -9,10 +9,10 @@
         ">
         
 	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
-        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="localhost:2181"/>
         <constructor-arg value="P"/>
-        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
-    </bean>
+        <property name="auth" value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf"/>
+    </bean><!--  
     <bean id="logMessageSender" class="com.zpaas.message.MessageSender" init-method="init">
         <property name="cc" ref="cc"/>
         <property name="confPath" value="/com/zpaas/message/logMessageSender"/>
@@ -88,5 +88,5 @@
     <bean id="localCacheSVC" class="com.zpaas.cache.local.LocalCacheSVCImpl" init-method="init">
         <property name="cc" ref="cc"/>
         <property name="confPath" value="/com/zpaas/cache/localCacheSVC"/>
-    </bean>
+    </bean>-->
 </beans>

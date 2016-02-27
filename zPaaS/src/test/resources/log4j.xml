@@ -35,7 +35,7 @@
     </appender>
  
     <!-- specify the logging level for loggers from other libraries -->
-    <logger name="com">
+    <logger name="com.zpaas">
     	 <level value="DEBUG" />
     	 
     </logger>
@@ -76,6 +76,5 @@
      <root>
         <priority value="INFO"/> 
         <appender-ref ref="STDOUT" /> 
-        <appender-ref ref="MSGOUT" /> 
      </root>    
 </log4j:configuration> 

@@ -8,17 +8,17 @@
         http://code.alibabatech.com/schema/dubbo/dubbo.xsd
         ">
 	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
-        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="localhost:2181"/>
         <constructor-arg value="P"/>
-        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+        <property name="auth" value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf"/>
     </bean>
     <bean id="resourceDispatcher" class="com.zpaas.dispatcher.ResourceDispatcher" init-method="init">
         <property name="cc" ref="cc"/>
-        <property name="confPath" value="/com/zpaas/dispatcher/resourceDispatcher"/>
+        <property name="confPath" value="/zpaas/dispatcher/testResource"/>
         <property name="executor" ref="executor"/>
         <property name="resourceId" value="testResource"/>
     </bean>
-    <bean id="executor" class="com.zpaas.dispatcher.ResourceExecutorTest" >
+    <bean id="executor" class="com.zpaas.test.ResourceExecutorTest" >
         
     </bean> 
 </beans>
