@@ -21,7 +21,7 @@ public class NewTransactionProcessor implements TransactionProcessor<Transaction
 	
 	public void processTransaction(final TransactionContext context, final MessageStatus status) {
 		
-		tt.execute(new TransactionCallback() {
+		tt.execute(new TransactionCallback<Object>() {
 			
 			@Override
 			public Object doInTransaction(TransactionStatus paramTransactionStatus) {

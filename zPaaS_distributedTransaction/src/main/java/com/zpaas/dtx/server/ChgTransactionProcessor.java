@@ -26,7 +26,7 @@ public class ChgTransactionProcessor implements TransactionProcessor<Transaction
 	private TransactionTemplate tt = null;
 	
 	public void processTransaction(final TransactionContext context, final MessageStatus status) {
-		tt.execute(new TransactionCallback() {
+		tt.execute(new TransactionCallback<Object>() {
 			
 			@Override
 			public Object doInTransaction(TransactionStatus paramTransactionStatus) {

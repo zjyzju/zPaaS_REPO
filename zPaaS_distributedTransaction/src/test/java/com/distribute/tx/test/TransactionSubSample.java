@@ -55,7 +55,7 @@ public class TransactionSubSample implements TransactionListener {
 		user.setCustId(cust.getCustId());
 		final UserDAO dao = userDao;
 		Object ret = tt
-				.execute(new org.springframework.transaction.support.TransactionCallback() {
+				.execute(new org.springframework.transaction.support.TransactionCallback<Object>() {
 
 					@Override
 					public Object doInTransaction(

@@ -58,7 +58,7 @@ public class TransactionMainSample {
 										if(count%4 == 1) {
 											throw new RuntimeException();
 										}
-										Object ret = tt.execute(new org.springframework.transaction.support.TransactionCallback() {
+										Object ret = tt.execute(new org.springframework.transaction.support.TransactionCallback<Object>() {
 											
 											@Override
 											public Object doInTransaction(
@@ -80,7 +80,6 @@ public class TransactionMainSample {
 									}
 								}));
 							} catch (RuntimeException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 //							try {
