@@ -161,7 +161,7 @@ public class DistributedDataSource implements DataSource, ConfigurationWatcher {
 
 	@Override
 	public Connection getConnection() throws SQLException {
-		DistribtedConnection conn = new DistribtedConnection();
+		DistributedConnection conn = new DistributedConnection();
 		conn.setDbRule(dbRule);
 		if(DistributeRuleAssist.isReadonly()) {
 			conn.setReadOnly(true);

@@ -17,12 +17,12 @@ import com.zpaas.db.common.DistributedTransactionManager;
  * @date 2014年6月23日 上午9:54:18 
  * @version V1.0
  */
-public class DistribtedConnection extends ConnectionBase {
-	public static final Logger log = Logger.getLogger(DistribtedConnection.class);
+public class DistributedConnection extends ConnectionBase {
+	public static final Logger log = Logger.getLogger(DistributedConnection.class);
 	private DistributedDBRule dbRule = null;
 	protected ConnectionManager manager = null;
 	
-	public DistribtedConnection() {
+	public DistributedConnection() {
 		manager = new ConnectionManager();
 	}
 	
