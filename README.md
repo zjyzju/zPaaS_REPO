@@ -65,5 +65,11 @@
 
 （2）最终一致事务
 
+四、技术平台介绍
 
+  参见zPaaS_introduction.pdf
+  
+五、使用说明
+
+  参见zPaaS_document.txt
 
