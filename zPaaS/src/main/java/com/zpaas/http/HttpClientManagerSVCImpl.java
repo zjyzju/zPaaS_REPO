@@ -74,8 +74,6 @@ public class HttpClientManagerSVCImpl implements ConfigurationWatcher,HttpClient
 		httpClient.getParams().setParameter(
 				HttpMethodParams.HTTP_CONTENT_CHARSET, httpCharset);
 		httpClient.getParams().setParameter(HTTP.CONTENT_ENCODING, httpCharset);
-		httpClient.getParams().setParameter(HTTP.CHARSET_PARAM, httpCharset);
-		httpClient.getParams().setParameter(HTTP.DEFAULT_PROTOCOL_CHARSET,httpCharset);
 		return httpClient;
 	}
 	
