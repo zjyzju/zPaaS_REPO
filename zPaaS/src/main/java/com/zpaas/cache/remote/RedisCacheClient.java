@@ -44,9 +44,9 @@ public class RedisCacheClient {
 			JSONObject json = JSONObject.fromObject(parameter);
 			if (json != null) {
 				config = new JedisPoolConfig();
-				config.setMaxActive(json.getInt(MAXACTIVE_KEY));
+				config.setMaxTotal(json.getInt(MAXACTIVE_KEY));
 				config.setMaxIdle(json.getInt(MAXIDLE_KEY));
-				config.setMaxWait(json.getLong(MAXWAIT_KEY));
+				config.setMaxWaitMillis(json.getLong(MAXWAIT_KEY));
 				config.setTestOnBorrow(json.getBoolean(TESTONBORROW_KEY));
 				config.setTestOnReturn(json.getBoolean(TESTONRETURN_KEY));
 				pool = new JedisPool(config, json.getString(HOST_KEY),
@@ -68,15 +68,14 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public List getItemFromList(int dbIndex, String key) {
+	public List<Object> getItemFromList(int dbIndex, String key) {
 		Jedis jedis = null;
 		List<byte[]> ss = null;
-		List data = new ArrayList();
+		List<Object> data = new ArrayList<Object>();
 		try {
 			jedis = pool.getResource();
 			jedis.select(dbIndex);
@@ -91,17 +90,16 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 		return data;
 
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public List keys(int dbIndex, String keyPattern) {
+	public List<String> keys(int dbIndex, String keyPattern) {
 		Jedis jedis = null;
 		Set<byte[]> ss = null;
-		List data = new ArrayList();
+		List<String> data = new ArrayList<String>();
 		try {
 			jedis = pool.getResource();
 			jedis.select(dbIndex);
@@ -113,7 +111,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 		return data;
 
@@ -129,7 +127,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -145,7 +143,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 		return result;
 	}
@@ -161,7 +159,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 		return result;
 	}
@@ -177,7 +175,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 	}
 
@@ -194,7 +192,7 @@ public class RedisCacheClient {
 			return null;
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -209,7 +207,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -225,7 +223,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -243,7 +241,7 @@ public class RedisCacheClient {
 			return null;
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -258,7 +256,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -276,7 +274,7 @@ public class RedisCacheClient {
 			return null;
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -291,7 +289,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 	}
 
@@ -306,7 +304,7 @@ public class RedisCacheClient {
 			return 0L;
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -322,7 +320,7 @@ public class RedisCacheClient {
 			return 0L;
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -342,7 +340,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 	}
@@ -358,7 +356,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 		return map;
 
@@ -378,7 +376,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 	}
 
@@ -393,7 +391,7 @@ public class RedisCacheClient {
 			log.error(e.getMessage(), e);
 		} finally {
 			if (jedis != null)
-				pool.returnResource(jedis);
+				jedis.close();
 		}
 
 		return sets;
