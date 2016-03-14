@@ -7,6 +7,7 @@ import org.apache.log4j.spi.LoggingEvent;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.message.MessageSender;
+import com.zpaas.message.v1.MessageSenderImpl;
 import com.zpaas.utils.CommonUtil;
 import com.zpaas.utils.ThreadId;
 
@@ -42,10 +43,11 @@ public class MessageLogAppender extends AppenderSkeleton {
 			cc.init();
 		}
 		if (sender == null) {
-			sender = new MessageSender();
-			sender.setCc(cc);
-			sender.setConfPath(confPath);
-			sender.init();
+			MessageSenderImpl senderImpl = new MessageSenderImpl();
+			senderImpl.setCc(cc);
+			senderImpl.setConfPath(confPath);
+			senderImpl.init();
+			sender = senderImpl;
 		}
 	}
 

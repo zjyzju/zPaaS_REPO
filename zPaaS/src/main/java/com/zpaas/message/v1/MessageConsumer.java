@@ -1,4 +1,4 @@
-package com.zpaas.message;
+package com.zpaas.message.v1;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -22,6 +22,8 @@ import org.apache.log4j.Logger;
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
 import com.zpaas.PaasException;
+import com.zpaas.message.Message;
+import com.zpaas.message.MessageListener;
 
 
 /**

@@ -1,6 +1,10 @@
-package com.zpaas.message;
+package com.zpaas.message.v1;
 
 import org.apache.log4j.Logger;
+
+import com.zpaas.message.Message;
+import com.zpaas.message.MessageListener;
+import com.zpaas.message.MessageStatus;
 
 import kafka.consumer.ConsumerIterator;
 import kafka.consumer.KafkaStream;

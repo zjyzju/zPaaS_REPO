@@ -1,4 +1,4 @@
-package com.zpaas.message;
+package com.zpaas.message.v1;
 
 import kafka.producer.Partitioner;
 import kafka.utils.VerifiableProperties;
@@ -8,9 +8,9 @@ import kafka.utils.VerifiableProperties;
  * @author ZhangJunyong
  *
  */
-public class MessageIdPartitioner implements Partitioner {
+public class LongPartitioner implements Partitioner {
 
-	public MessageIdPartitioner(VerifiableProperties props) {
+	public LongPartitioner(VerifiableProperties props) {
 		
 	}
 	

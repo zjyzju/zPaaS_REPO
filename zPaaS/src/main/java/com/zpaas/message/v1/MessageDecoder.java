@@ -1,7 +1,9 @@
-package com.zpaas.message;
+package com.zpaas.message.v1;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
+
+import com.zpaas.message.Message;
 
 import kafka.serializer.Decoder;
 import kafka.utils.VerifiableProperties;
