@@ -55,7 +55,7 @@ public class MongoDBClient {
 				mongo = new MongoClient(sa);
 				
 			}
-		} catch (UnknownHostException e) {
+		} catch (Exception e) {
 			log.error(e.getMessage(),e);
 		}
 	}
@@ -80,7 +80,7 @@ public class MongoDBClient {
 				}
 				
 			}
-		} catch (UnknownHostException e) {
+		} catch (Exception e) {
 			log.error(e.getMessage(),e);
 		}
 	}
