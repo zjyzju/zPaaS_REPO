@@ -3,7 +3,8 @@ package com.zpaas.cache.local;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -16,7 +17,7 @@ import com.zpaas.PaasException;
  */
 public class LocalCacheSVCImpl implements ConfigurationWatcher,LocalCacheSVC {
 
-	private static final Logger log = Logger.getLogger(LocalCacheSVCImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(LocalCacheSVCImpl.class);
 		
 	private JSONObject cache = null;
 	private ConfigurationCenter cc = null;
@@ -37,7 +38,7 @@ public class LocalCacheSVCImpl implements ConfigurationWatcher,LocalCacheSVC {
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new cache information is received: " + conf);
+			log.info("new cache information is received: {}",conf);
 		}
 		if(conf != null && conf.trim().length() > 0) {
 			cache = JSONObject.fromObject(conf);

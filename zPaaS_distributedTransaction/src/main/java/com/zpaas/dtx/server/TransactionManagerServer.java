@@ -20,7 +20,8 @@ import kafka.serializer.StringDecoder;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -42,7 +43,7 @@ import com.zpaas.dtx.server.dao.TransactionDAO;
 import com.zpaas.message.MessageStatus;
 
 public class TransactionManagerServer implements ConfigurationWatcher {
-	public static final Logger log = Logger.getLogger(TransactionManagerServer.class);
+	public static final Logger log = LoggerFactory.getLogger(TransactionManagerServer.class);
 
 	private static final String TRANSACTION_TOPIC = "transaction.topic";
 	private static final String PROCESSOR_NUM = "processor.num";
@@ -76,7 +77,7 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 	private Watcher wh = new Watcher() {
 		public void process(WatchedEvent event) {
 			if (log.isDebugEnabled()) {
-				log.debug("receive watch event:" + event.toString());
+				log.debug("receive watch event:{}", event.toString());
 			}
 			if (LEADER_PATH.equals(event.getPath()) && EventType.NodeDeleted.equals(event.getType())) {
 				if (log.isDebugEnabled()) {
@@ -92,7 +93,7 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 				watchTopicPath();
 			} else {
 				if (log.isDebugEnabled()) {
-					log.debug("do nothing event:" + event.toString());
+					log.debug("do nothing event:{}", event.toString());
 				}
 			}
 		}
@@ -117,7 +118,7 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new TransactionManagerServer configuration is received: " + conf);
+			log.info("new TransactionManagerServer configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		@SuppressWarnings("rawtypes")
@@ -208,7 +209,7 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 			if (topics == null || topics.size() == 0) {
 				return;
 			}
-			log.debug(topics);
+			log.debug(JSONArray.fromObject(topics).toString());
 			try {
 				updateTopics(topics);
 			} catch (Exception e) {
@@ -239,7 +240,7 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 			JSONArray array = new JSONArray();
 			for (String participant : participants) {
 				if (log.isDebugEnabled()) {
-					log.debug("process subscriber:" + participant);
+					log.debug("process subscriber:{}", participant);
 				}
 				participant = participant.substring(0, participant.lastIndexOf("_"));
 				if (!array.contains(participant)) {
@@ -250,7 +251,7 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 			transaction.setParticipants(array.toString());
 		}
 		if (log.isDebugEnabled()) {
-			log.debug("update transaction:" + transaction);
+			log.debug("update transaction:{}", transaction);
 		}
 		cacheSvc.addItem(Transaction.CACHE_PREFIX + name, transaction);
 		int i = transactionDAO.update(transaction);
@@ -316,26 +317,26 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 		}
 		if (oldConsumer != null) {
 			if (log.isDebugEnabled()) {
-				log.debug("old consumer is closed: " + oldConsumer);
+				log.debug("old consumer is closed: {}", oldConsumer);
 			}
 			oldConsumer.shutdown();
 		}
 		if (oldExecutor != null) {
 			if (log.isDebugEnabled()) {
-				log.debug("begin to close old executor: " + oldExecutor);
+				log.debug("begin to close old executor: {}", oldExecutor);
 			}
 			oldExecutor.shutdown();
 			try {
 				while (!oldExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
 					if (log.isDebugEnabled()) {
-						log.debug("old executor is not closed: " + oldExecutor);
+						log.debug("old executor is not closed: {}", oldExecutor);
 					}
 				}
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				log.error(e.getMessage(),e);
 			}
 			if (log.isDebugEnabled()) {
-				log.debug("old executor is closed: " + oldExecutor);
+				log.debug("old executor is closed: {}", oldExecutor);
 			}
 		}
 	}
@@ -411,7 +412,7 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 }
 
 class TransactionServerProcessor implements Runnable {
-	public static final Logger log = Logger.getLogger(TransactionServerProcessor.class);
+	public static final Logger log = LoggerFactory.getLogger(TransactionServerProcessor.class);
 	
 	private String processorName = null;
 	private KafkaStream<String, TransactionContext> stream = null;
@@ -428,7 +429,7 @@ class TransactionServerProcessor implements Runnable {
 		this.newTransactionProcessor = newTransactionProcessor;
 		this.chgTransactionProcessor = chgTransactionProcessor;
 		if(log.isInfoEnabled()) {
-			log.info(this.processorName + " started");
+			log.info("{} started", this.processorName);
 		}
 	}
 	public void run() {
@@ -437,7 +438,7 @@ class TransactionServerProcessor implements Runnable {
 		while(it.hasNext() ) {
 			try {
 				msg = it.next().message();			
-				log.info(processorName + " process transaction:" + msg.toString());
+				log.info("{} process transaction:",this.processorName, msg.toString());
 				MessageStatus status = new MessageStatus();
 				if(TransactionContext.TRANSACTION_STATUS_NEW.equals(msg.getStatus()) || 
 						TransactionContext.ASSURED_TRANSACTION_STATUS_NEW.equals(msg.getStatus())) {
@@ -451,15 +452,13 @@ class TransactionServerProcessor implements Runnable {
 					chgTransactionProcessor.processTransaction(msg, status);				
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			}catch (Error e) {
-				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			}
 		}
 		if(log.isInfoEnabled()) {
-			log.info(processorName + " is stopped");
+			log.info("{} is stopped", processorName);
 		}
 	}
 

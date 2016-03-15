@@ -9,14 +9,15 @@ import java.util.Map.Entry;
 import kafka.producer.KeyedMessage;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.db.common.DistributedTransactionManager;
 import com.zpaas.dtx.common.TransactionContext;
 import com.zpaas.dtx.common.TransactionPublisher;
 
 public class AssuredTransactionExecutor {
-	public static final Logger log = Logger.getLogger(AssuredTransactionExecutor.class);
+	public static final Logger log = LoggerFactory.getLogger(AssuredTransactionExecutor.class);
 	
 	private AssuredTransactionParticipant mainTransaction = null;
 	private Map<String, AssuredTransactionParticipant> subTransactions = null;
@@ -42,10 +43,10 @@ public class AssuredTransactionExecutor {
 				new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
 						String.valueOf(context.getTransactionId()), context);
 		if(log.isInfoEnabled()) {
-			log.info("change status of transaction:" + context.getTransactionId() + " to " + transactionStatus);
+			log.info("change status of transaction:{} to {}",context.getTransactionId(), transactionStatus);
 		}
 		if(!publisher.publish(transactionMessage)) {
-			log.error("publish transaction failed: " + context.getTransactionId() + " new status:" + context.getStatus());
+			log.error("publish transaction failed: {} new status: {}",context.getTransactionId(), context.getStatus());
 			return ;
 		}
 	}
@@ -61,11 +62,10 @@ public class AssuredTransactionExecutor {
 				new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
 						String.valueOf(context.getTransactionId()), context);
 		if(log.isInfoEnabled()) {
-			log.info("change status of transaction:" + context.getTransactionId() + " to " +
-					TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FAILED);
+			log.info("change status of transaction:{} to {}", context.getTransactionId(), TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FAILED);
 		}
 		if(!publisher.publish(transactionMessage)) {
-			log.error("publish transaction failed: " + context.getTransactionId() + " new status:" + context.getStatus());
+			log.error("publish transaction failed: {} new status: {}", context.getTransactionId(), context.getStatus());
 			return ;
 		}
 	}
@@ -81,11 +81,10 @@ public class AssuredTransactionExecutor {
 				new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
 						String.valueOf(context.getTransactionId()), context);
 		if(log.isInfoEnabled()) {
-			log.info("change status of transaction:" + context.getTransactionId() + " to " +
-					TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FINISH);
+			log.info("change status of transaction: {} to {}",context.getTransactionId(),TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FINISH);
 		}
 		if(!publisher.publish(transactionMessage)) {
-			log.error("publish transaction failed: " + context.getTransactionId() + " new status:" + context.getStatus());
+			log.error("publish transaction failed: {} new status: {}",context.getTransactionId(), context.getStatus());
 			return ;
 		}
 	}
@@ -112,8 +111,7 @@ public class AssuredTransactionExecutor {
 		}
 		
 		if(DistributedTransactionManager.getConnectionMap().size() != 1) {
-			log.error("main transaction only can be assigned with one connection:" + 
-					DistributedTransactionManager.getConnectionMap());
+			log.error("main transaction only can be assigned with one connection: {}", DistributedTransactionManager.getConnectionMap());
 			assuredStatus.setRollbackOnly();
 			return null;
 		}
@@ -125,8 +123,7 @@ public class AssuredTransactionExecutor {
 				String subKey = (String)DistributedTransactionManager.getConnectionMap().keySet().iterator().next();
 				Connection subConn = DistributedTransactionManager.getConnectionMap().get(subKey);
 				if(DistributedTransactionManager.getConnectionMap().size() != 1) {
-					log.error("sub transaction only can be assigned with one connection:" + 
-							DistributedTransactionManager.getConnectionMap());
+					log.error("sub transaction only can be assigned with one connection: {}",DistributedTransactionManager.getConnectionMap());
 					assuredStatus.setRollbackOnly();
 					return null;
 				}
@@ -175,8 +172,7 @@ public class AssuredTransactionExecutor {
 			DistributedTransactionManager.endTransaction();
 			doRollback(assuredStatus);
 			assuredStatus.setRollbackOnly();
-			ex.printStackTrace();
-			log.error("transaction error:" + ex);
+			log.error(ex.getMessage(),ex);
 			return result;
 		}
 		DistributedTransactionManager.endTransaction();
@@ -194,8 +190,7 @@ public class AssuredTransactionExecutor {
 		try {
 			assuredStatus.getMainConn().commit();
 		} catch (SQLException e) {
-			e.printStackTrace();
-			log.error("main transaction commit failed.");
+			log.error(e.getMessage(),e);
 			rollbackSubTransactions(assuredStatus.getConns().values(), assuredStatus.getAssuredContext());
 			this.changeTransactionContextStatus(
 						TransactionContext.ASSURED_TRANSACTION_STATUS_ROLLBACK);
@@ -214,8 +209,7 @@ public class AssuredTransactionExecutor {
 		try {
 			assuredStatus.getMainConn().close();
 		} catch (SQLException e) {
-			e.printStackTrace();
-			log.error("main transaction close failed.");
+			log.error(e.getMessage(),e);
 			return;
 		}
 		closeSubTransactions(assuredStatus);
@@ -248,9 +242,8 @@ public class AssuredTransactionExecutor {
 				conn.commit();
 				this.notifySubTransactionFinish(entry.getKey());
 			} catch (Exception e) {
-				e.printStackTrace();
 				succeed = false;
-				log.error("sub transaction commit failed.");
+				log.error(e.getMessage(),e);
 				this.notifySubTransactionFailed(entry.getKey());
 			}
 			
@@ -271,9 +264,8 @@ public class AssuredTransactionExecutor {
 			try {
 				conn.close();
 			} catch (Exception e) {
-				e.printStackTrace();
 				succeed = false;
-				log.error("sub transaction close failed.");
+				log.error(e.getMessage(),e);
 			}
 		}
 		return succeed;
@@ -287,8 +279,7 @@ public class AssuredTransactionExecutor {
 			try {
 				conn.rollback();
 			} catch (SQLException e) {
-				e.printStackTrace();
-				log.error("rollback transaction commit failed.");
+				log.error(e.getMessage(),e);
 			}
 		}
 	}

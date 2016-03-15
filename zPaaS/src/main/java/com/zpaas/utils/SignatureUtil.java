@@ -9,7 +9,8 @@ import java.security.Signature;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 签名工具类
@@ -17,7 +18,7 @@ import org.apache.log4j.Logger;
  *
  */
 public class SignatureUtil {
-	public static final Logger log = Logger.getLogger(SignatureUtil.class);
+	public static final Logger log = LoggerFactory.getLogger(SignatureUtil.class);
 	
 	private static final String PKCS12 = "PKCS12";
 	private static final String X509 = "X.509";

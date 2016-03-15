@@ -4,7 +4,8 @@ import java.util.Date;
 
 import net.sf.json.JSONArray;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -18,7 +19,7 @@ import com.zpaas.message.MessageStatus;
 
 
 public class ChgTransactionProcessor implements TransactionProcessor<TransactionContext> {
-	public static Logger log = Logger.getLogger(ChgTransactionProcessor.class);
+	public static Logger log = LoggerFactory.getLogger(ChgTransactionProcessor.class);
 	
 	private TransactionContextDAO contextDAO = null;
 	private TransactionDAO transactionDAO = null;
@@ -31,11 +32,11 @@ public class ChgTransactionProcessor implements TransactionProcessor<Transaction
 			@Override
 			public Object doInTransaction(TransactionStatus paramTransactionStatus) {
 				if(log.isInfoEnabled()) {
-					log.info("process transaction:" + context.getContent());
+					log.info("process transaction:{}", context.getContent());
 				}
 				TransactionContext tm = contextDAO.getTransactionContextById(context.getTransactionId());
 				if(tm == null) {
-					log.error("invalid transaction:" + context);
+					log.error("invalid transaction:{}", context);
 					return false;
 				}
 				if(TransactionContext.TRANSACTION_STATUS_PART_SUCCEED.equals(context.getStatus()) ||

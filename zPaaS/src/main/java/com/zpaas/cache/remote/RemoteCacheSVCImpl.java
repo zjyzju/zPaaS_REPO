@@ -7,7 +7,8 @@ import java.util.Set;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -23,7 +24,7 @@ import com.zpaas.PaasException;
  */
 public class RemoteCacheSVCImpl implements ConfigurationWatcher,RemoteCacheSVC {
 	
-	private static final Logger log = Logger.getLogger(RemoteCacheSVCImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(RemoteCacheSVCImpl.class);
 	
 	
 	private static final String HOST_KEY = "host";
@@ -66,7 +67,7 @@ public class RemoteCacheSVCImpl implements ConfigurationWatcher,RemoteCacheSVC {
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new remote cache configuration is received: " + conf);
+			log.info("new remote cache configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		boolean changed = false;
@@ -108,7 +109,7 @@ public class RemoteCacheSVCImpl implements ConfigurationWatcher,RemoteCacheSVC {
 		if(changed) {
 				redisCache = new RedisCacheClient(conf);
 				if(log.isInfoEnabled()) {
-					log.info("cache server address is changed to "+conf);
+					log.info("cache server address is changed to {}", conf);
 				}
 		}
 	}

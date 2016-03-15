@@ -25,7 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.db.sql.ParsedSqlContext;
 import com.zpaas.db.sql.SQLType;
@@ -39,7 +40,7 @@ import com.zpaas.db.sql.TableDistributeInfo;
  */
 public class DistributedPreparedStatement extends DistributedStatement
 				implements PreparedStatement {
-	public static final Logger log = Logger.getLogger(DistributedPreparedStatement.class);
+	public static final Logger log = LoggerFactory.getLogger(DistributedPreparedStatement.class);
 	
 	private Map<Integer, Integer> typeMap = new HashMap<Integer,Integer>();
 	private Map<Integer,Object> valueMap = new HashMap<Integer,Object>();
@@ -92,13 +93,11 @@ public class DistributedPreparedStatement extends DistributedStatement
 
 	@Override
 	public void addBatch() throws SQLException {
-		// TODO Auto-generated method stub
 		
 	}
 	
 	@Override
 	public int[] executeBatch() throws SQLException {
-		// TODO Auto-generated method stub
 		return super.executeBatch();
 	}
 	
@@ -109,8 +108,8 @@ public class DistributedPreparedStatement extends DistributedStatement
 		ResultSet rs = plan.executeQuery();
 		long endTime = System.currentTimeMillis();
 		if(log.isDebugEnabled()) {
-			log.debug("distributedDb(" + getDbName() + ") cost " + (endTime-beginTime) + " ms to execute sql: " + sql);
-			log.debug(this.valueMap);
+			log.debug("distributedDb({}) cost {} ms to execute sql: ",getDbName(),(endTime-beginTime), sql);
+			log.debug(this.valueMap.toString());
 		}
 		return rs;
 	}
@@ -122,8 +121,8 @@ public class DistributedPreparedStatement extends DistributedStatement
 		int result = plan.executeUpdate(-1,null,null);
 		long endTime = System.currentTimeMillis();
 		if(log.isDebugEnabled()) {
-			log.debug("distributedDb(" + getDbName() + ") cost " + (endTime-beginTime) + " ms to execute sql: " + sql);
-			log.debug(this.valueMap);
+			log.debug("distributedDb({}) cost {} ms to execute sql: ",getDbName(),(endTime-beginTime), sql);
+			log.debug(this.valueMap.toString());
 		}
 		return result;
 	}

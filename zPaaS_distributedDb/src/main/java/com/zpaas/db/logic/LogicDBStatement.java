@@ -5,7 +5,8 @@ import java.sql.SQLException;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.db.base.ConnectionBase;
 import com.zpaas.db.base.StatementBase;
@@ -18,7 +19,7 @@ import com.zpaas.db.distribute.DistributeRuleAssist;
  * @version V1.0
  */
 public class LogicDBStatement extends StatementBase {
-	public static final Logger log = Logger.getLogger(LogicDBStatement.class);
+	public static final Logger log = LoggerFactory.getLogger(LogicDBStatement.class);
 	
 	
 	private JSONObject dbRule;	
@@ -42,7 +43,7 @@ public class LogicDBStatement extends StatementBase {
 			setDbName(getDbRule().getString("master"));
 		}
 		if(log.isTraceEnabled()) {
-			log.trace("select db(" + this.getDbName() + ") to execute sql");
+			log.trace("select db({}) to execute sql", this.getDbName());
 		}
 	}
 	
@@ -64,7 +65,7 @@ public class LogicDBStatement extends StatementBase {
 //			}
 //		}
 		if(conn == null) {
-			throw new SQLException("failed to get connection from db: "+ this.getDbName());
+			throw new SQLException("failed to get connection from db: {}", this.getDbName());
 		}
 		((ConnectionBase)this.getConnection()).setWrappedConnection(conn);
 		conn.setAutoCommit(((ConnectionBase)this.getConnection()).getAutoCommit());
@@ -91,7 +92,7 @@ public class LogicDBStatement extends StatementBase {
 //			}
 //		}
 		if(conn == null) {
-			throw new SQLException("failed to get connection from db: "+ this.getDbName());
+			throw new SQLException("failed to get connection from db: {}", this.getDbName());
 		}
 		((ConnectionBase)this.getConnection()).setWrappedConnection(conn);
 		conn.setReadOnly(((ConnectionBase)this.getConnection()).isReadOnly());

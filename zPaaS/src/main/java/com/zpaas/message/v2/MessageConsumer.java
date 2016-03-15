@@ -11,7 +11,8 @@ import java.util.concurrent.TimeUnit;
 import net.sf.json.JSONObject;
 
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -26,7 +27,7 @@ import com.zpaas.message.MessageListener;
  *
  */
 public class MessageConsumer implements ConfigurationWatcher{
-	public static final Logger log = Logger.getLogger(MessageConsumer.class);
+	public static final Logger log = LoggerFactory.getLogger(MessageConsumer.class);
 	
 	private String confPath = "/com/zpaas/message/messageConsumer";
 	private static final String MSG_PROCESSOR_NUM = "msg.processor.num";
@@ -63,7 +64,7 @@ public class MessageConsumer implements ConfigurationWatcher{
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new MessageConsumer configuration is received: " + conf);
+			log.info("new MessageConsumer configuration is received: {}", conf);
 		}
 		
 		JSONObject json = JSONObject.fromObject(conf);
@@ -132,7 +133,7 @@ public class MessageConsumer implements ConfigurationWatcher{
 		}
 		if(oldConsumers != null) {
 			if(log.isInfoEnabled()) {
-				log.info("old consumer is closed: " + oldConsumers);
+				log.info("old consumer is closed: {}", oldConsumers);
 			}
 			for(KafkaConsumer<String, Message> consumer : oldConsumers) {
 				consumer.close();
@@ -140,20 +141,20 @@ public class MessageConsumer implements ConfigurationWatcher{
 		}
 		if(oldExecutor != null) {
 			if(log.isInfoEnabled()) {
-				log.info("begin to close old executor: " + oldExecutor);
+				log.info("begin to close old executor: {}", oldExecutor);
 			}
 			oldExecutor.shutdown();
 			try {
 				while(!oldExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
 					if(log.isInfoEnabled()) {
-						log.info("old executor is not closed: " + oldExecutor);
+						log.info("old executor is not closed: {}", oldExecutor);
 					}
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			if(log.isInfoEnabled()) {
-				log.info("old executor is closed: " + oldExecutor);
+				log.info("old executor is closed: {}", oldExecutor);
 			}
 		}
 	}

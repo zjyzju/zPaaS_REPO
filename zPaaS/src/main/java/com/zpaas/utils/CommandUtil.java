@@ -3,7 +3,8 @@ package com.zpaas.utils;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 命令执行工具类
@@ -11,7 +12,7 @@ import org.apache.log4j.Logger;
  *
  */
 public class CommandUtil {
-	public static final Logger log = Logger.getLogger(CommandUtil.class);
+	public static final Logger log = LoggerFactory.getLogger(CommandUtil.class);
 	
 	public static String execCommandForResult(String[] cmd) {
 		if(log.isDebugEnabled()) {
@@ -39,8 +40,7 @@ public class CommandUtil {
 			}
 			return sb.toString();
 		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getStackTrace());
+			log.error(e.getMessage(),e);
 			return null;
 		}
 	}
@@ -67,8 +67,7 @@ public class CommandUtil {
 			}
 			return sb.toString();
 		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getStackTrace());
+			log.error(e.getMessage(),e);
 			return null;
 		}
 	}
@@ -90,8 +89,7 @@ public class CommandUtil {
 				return false;
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getStackTrace());
+			log.error(e.getMessage(),e);
 			return false;
 		}
 	}
@@ -108,8 +106,7 @@ public class CommandUtil {
 				return false;
 			}	
 		} catch (Exception e) {
-			e.printStackTrace();
-			log.error(e.getStackTrace());
+			log.error(e.getMessage(),e);
 			return false;
 		}
 	}

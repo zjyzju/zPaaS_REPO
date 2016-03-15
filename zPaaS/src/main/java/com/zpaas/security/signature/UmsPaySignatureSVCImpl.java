@@ -15,7 +15,8 @@ import java.security.spec.RSAPublicKeySpec;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -30,7 +31,7 @@ import com.zpaas.utils.CommonUtil;
  *
  */
 public class UmsPaySignatureSVCImpl implements ConfigurationWatcher, SignatureSVC {
-	public static final Logger log = Logger.getLogger(UmsPaySignatureSVCImpl.class);
+	public static final Logger log = LoggerFactory.getLogger(UmsPaySignatureSVCImpl.class);
 	
 	public static final String PRIVATE_KEY_MOD = "privateKeyMod";
 	public static final String PRIVATE_KEY_EXP = "privateKeyExp";

@@ -7,7 +7,8 @@ import java.util.List;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -28,7 +29,7 @@ import com.zpaas.ConfigurationWatcher;
  */
 public class ResourceDispatcher implements ConfigurationWatcher {
 	
-	public static final Logger log = Logger.getLogger(ResourceDispatcher.class);
+	public static final Logger log = LoggerFactory.getLogger(ResourceDispatcher.class);
 
 	public static final String ROOT_PATH = "/dispatcher";
 	public static final String EXECUTOR_PATH = "/executor";
@@ -63,7 +64,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 	private Watcher wh = new Watcher() {
 		public void process(WatchedEvent event) {
 			if (log.isDebugEnabled()) {
-				log.debug("receive watch event:" + event.toString());
+				log.debug("receive watch event: {}", event.toString());
 			}
 			if ((domainPath + LEADER_PATH).equals(event.getPath())) {
 				if (EventType.NodeDeleted.equals(event.getType())) {
@@ -104,7 +105,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new dispatcher configuration is received: " + conf);
+			log.info("new dispatcher configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		boolean changed = false;
@@ -228,7 +229,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			}
 			if (newLeader != null) {
 				if (log.isDebugEnabled()) {
-					log.debug("I'm the leader:" + nodeName);
+					log.debug("I'm the leader: {}", nodeName);
 				}
 				isLeader = true;
 				dispatchResource();
@@ -256,7 +257,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			e1.printStackTrace();
 		}
 		if (log.isDebugEnabled()) {
-			log.debug("new servers:" + servers);
+			log.debug("new servers: {}", servers);
 		}
 		
 		if(servers == null || servers.size() == 0) {
@@ -293,7 +294,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			//lastAllocMap is controlled by leader, can be used to judge whether has last resource occupying finished.
 			//if last resource occupying not finish, wait until it finish.
 			if (log.isDebugEnabled()) {
-				log.debug("lastAllocMap:" + lastAllocMap);
+				log.debug("lastAllocMap: {}", lastAllocMap);
 			}
 			boolean lastFinished = true;
 			HashMap<String, String> owners = null;
@@ -322,8 +323,8 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 					}
 				}
 				if (log.isDebugEnabled()) {
-					log.debug("current resource owner: " + owners);
-					log.debug("current occupyMap: " + occupyMap);
+					log.debug("current resource owner: {}", owners);
+					log.debug("current occupyMap: {}", occupyMap);
 				}
 				for(String server : lastAllocMap.keySet()) {
 					JSONArray allocServerResources = lastAllocMap.get(server);
@@ -345,7 +346,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 						break;
 					}
 					if(log.isInfoEnabled()) {
-						log.info("Waiting for last resource occupying finish for times: " + retry);
+						log.info("Waiting for last resource occupying finish for times: {}", retry);
 					}
 					try {
 						Thread.sleep(2000*retry);
@@ -358,7 +359,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			
 		}
 		if (log.isDebugEnabled()) {
-			log.debug("dispatch round finished:" + nodeName);
+			log.debug("dispatch round finished: {}", nodeName);
 		}
 	}
 
@@ -404,8 +405,8 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			}
 
 			if (log.isDebugEnabled()) {
-				log.debug("allocated resource: " + allocated);
-				log.debug("allocate info: " + old);
+				log.debug("allocated resource: {}", allocated);
+				log.debug("allocate info: {}", old);
 			}
 
 			ArrayList<String> free = new ArrayList<String>();
@@ -417,7 +418,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			}
 
 			if (log.isDebugEnabled()) {
-				log.debug("free resource: " + free);
+				log.debug("free resource: {}", free);
 			}
 
 			
@@ -484,13 +485,13 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			
 
 			if (log.isDebugEnabled()) {
-				log.debug("new allocated resource: " + old);
-				log.debug("new free resource: " + free);
+				log.debug("new allocated resource: {}", old);
+				log.debug("new free resource: {}", free);
 			}
 
 			servers.removeAll(old.keySet());
 			if (log.isDebugEnabled()) {
-				log.debug("left servers need to assign resource: " + servers);
+				log.debug("left servers need to assign resource: {}", servers);
 			}
 			int size = servers.size();
 			int freeSize = free.size();
@@ -524,7 +525,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			dispatchResult.putAll(old);
 		}
 		if (log.isDebugEnabled()) {
-			log.debug("final allocate info: " + dispatchResult);
+			log.debug("final allocate info: {}", dispatchResult);
 		}
 		
 		for (String server : dispatchResult.keySet()) {
@@ -543,7 +544,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 		nodeName = zk.create(domainPath + EXECUTOR_I_PATH, null, Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
 		node = nodeName.substring(nodeName.lastIndexOf("/") + 1);
 		if (log.isDebugEnabled()) {
-			log.debug(nodeName + ":" + node + " start to provide service.");
+			log.debug("{} : {} start to provide service.", nodeName, node);
 		}
 
 		zk.getData(nodeName, true, null);
@@ -561,14 +562,14 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 		synchronized (lock1) {
 			try {				
 				if (log.isDebugEnabled()) {
-					log.debug("begin to occupy resource:" + occupyResource);
+					log.debug("begin to occupy resource: {}", occupyResource);
 				}
 				executor.prepareResourceAllocate(JSONArray.fromObject(tmp));//修改成新的对象，避免executor修改后造成影响
 
 				ArrayList<Object> left = new ArrayList<Object>();
 				if (occupiedResource != null) {
 					if (log.isDebugEnabled()) {
-						log.debug("occupiedResource:" + occupiedResource);
+						log.debug("occupiedResource: {}", occupiedResource);
 					}
 					if (occupiedResource.containsAll(occupyResource) && occupyResource.containsAll(occupiedResource)) {
 						if (log.isDebugEnabled()) {
@@ -593,7 +594,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 								while (!executor.canReleaseResource(resource)) {
 									try {
 										if (log.isDebugEnabled()) {
-											log.debug("waite executor to release resource:" + resource);
+											log.debug("waite executor to release resource: {}", resource);
 										}
 										Thread.sleep(count * 1000);
 									} catch (Exception e) {
@@ -603,7 +604,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 								}
 								String node = domainPath + OWNER_PATH + resource;
 								if (log.isDebugEnabled()) {
-									log.debug("release resource:" + node);
+									log.debug("release resource: {}", node);
 								}
 								zk.delete(node, -1);
 							} catch (Exception e) {
@@ -636,7 +637,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 							node = zk
 									.create(occupyNode, nodeName.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 							if (log.isDebugEnabled()) {
-								log.debug("occupy resource:" + occupyNode);
+								log.debug("occupy resource: {}", occupyNode);
 							}
 						} catch (Exception e) {
 							
@@ -660,15 +661,13 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 								JSONArray oldArray = JSONArray.fromObject(oldRes);
 								if(oldArray.contains(resource)) {
 									if (newRes == null) {
-										log.warn("the resource had been assigned to " + oldOwner + ". " + 
-												nodeName + "abandon occuping.");
+										log.warn("the resource had been assigned to {}.{} abandon occuping.", oldOwner, nodeName );
 										occupyResource.remove(resource);
 										continue;
 									}else {
 										JSONArray newArray = JSONArray.fromObject(newRes);
 										if(!newArray.contains(resource)) {
-											log.warn("the resource had been assigned to " + oldOwner + ". " + 
-													nodeName + "abandon occuping.");
+											log.warn("the resource had been assigned to {}.{} abandon occuping.", oldOwner, nodeName);
 											occupyResource.remove(resource);
 											continue;
 										}
@@ -677,8 +676,8 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 							}
 
 							if (log.isDebugEnabled()) {
-								log.debug("failed to occupy resource:" + occupyNode);
-								log.debug("new occupyier is:" + nodeName + " old is:" + oldOwner);
+								log.debug("failed to occupy resource: {}", occupyNode);
+								log.debug("new occupyier is: {} old is: {}",nodeName, oldOwner);
 							}
 						}
 						if (node == null) {
@@ -688,7 +687,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 					count++;
 					if (left.size() > 0) {
 						if (log.isDebugEnabled()) {
-							log.debug("waiting for occupy resources: " + count);
+							log.debug("waiting for occupy resources: {}", count);
 						}
 						try {
 							Thread.sleep(1000 * (count));
@@ -706,7 +705,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 			} 
 		}
 		if (log.isDebugEnabled()) {
-			log.debug("occupy resource finished:" + nodeName);
+			log.debug("occupy resource finished: {}", nodeName);
 		}
 	}
 

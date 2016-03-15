@@ -11,7 +11,8 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -24,7 +25,7 @@ import com.zpaas.cache.remote.RedisCacheClient;
  *
  */
 public class SessionManager implements ConfigurationWatcher {
-	private Logger log = Logger.getLogger(SessionManager.class);
+	private Logger log = LoggerFactory.getLogger(SessionManager.class);
 	private static final String SESSION_ID_PREFIX = "R_JSID_";
 	private static final String SESSION_ID_COOKIE = "JSESSIONID";
 	private static final String EXPIRATIONUPDATEINTERVAL_KEY = "expirationUpdateInterval";
@@ -113,7 +114,7 @@ public class SessionManager implements ConfigurationWatcher {
 				session.lastAccessedTime);
 		this.expireItemToCache(session.id, this.maxInactiveInterval);
 		if (this.log.isDebugEnabled())
-			this.log.debug("CacheHttpSession Create [ID=" + session.id + "]");
+			this.log.debug("CacheHttpSession Create [ID={}]", session.id);
 		saveCookie(session, request, response);
 		return session;
 	}
@@ -158,8 +159,7 @@ public class SessionManager implements ConfigurationWatcher {
 		}
 
 		if (this.log.isDebugEnabled())
-			this.log.debug("CacheHttpSession saveCookie [ID=" + session.id
-					+ "]");
+			this.log.debug("CacheHttpSession saveCookie [ID={}]", session.id);
 	}
 
 	private CacheHttpSession loadSession(String sessionId,
@@ -169,7 +169,7 @@ public class SessionManager implements ConfigurationWatcher {
 		Object o = this.getItemFromCache(sessionId, "lastAccessedTime"
 				+ sessionId);
 		if (o == null) {
-			this.log.debug("Session " + sessionId + " not found in Redis");
+			this.log.debug("Session {} not found in Redis", sessionId);
 			session = null;
 		} else {
 			session = new CacheHttpSession();
@@ -183,8 +183,7 @@ public class SessionManager implements ConfigurationWatcher {
 			this.updateExpireItemToCache(session);
 		}
 		if (this.log.isDebugEnabled())
-			this.log.debug("CacheHttpSession Load [ID=" + sessionId + ",exist="
-					+ (session != null) + "]");
+			this.log.debug("CacheHttpSession Load [ID={},exist={}]", sessionId, (session != null));
 		return session;
 	}
 
@@ -205,7 +204,7 @@ public class SessionManager implements ConfigurationWatcher {
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new session configuration is received: " + conf);
+			log.info("new session configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		boolean changed = false;
@@ -266,7 +265,7 @@ public class SessionManager implements ConfigurationWatcher {
 		if (changed) {
 			cacheClient = new RedisCacheClient(conf);
 			if (log.isInfoEnabled()) {
-				log.info("cache server address is changed to " + conf);
+				log.info("cache server address is changed to {}", conf);
 			}
 		}
 	}

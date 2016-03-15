@@ -4,7 +4,8 @@ import java.io.IOException;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -23,7 +24,7 @@ import com.zpaas.utils.CommonUtil;
  *
  */
 public class MonitorRegistry implements ConfigurationWatcher {
-	public static final Logger log = Logger.getLogger(MonitorRegistry.class);
+	public static final Logger log = LoggerFactory.getLogger(MonitorRegistry.class);
 	
 	public static final String ZK_SERVER_KEY = "zk.server";
 	public static final String MONITOR_TARGET_TYPE = "monitor.target.type";
@@ -51,7 +52,7 @@ public class MonitorRegistry implements ConfigurationWatcher {
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new MonitorRegistry configuration is received: " + conf);
+			log.info("new MonitorRegistry configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		boolean serverChanged = false;
@@ -72,14 +73,12 @@ public class MonitorRegistry implements ConfigurationWatcher {
 					zk.close();
 				} catch (InterruptedException e) {
 					log.error(e.getMessage(),e);
-					log.error("close old zk failed:" + e);
 				}
 			}
 			try {
 				zk = new ZooKeeper(zkServer, 6000, null);
 			} catch (IOException e) {
 				log.error(e.getMessage(),e);
-				log.error("connect to zookeeper failed:" + e);
 			}
 		}
 		

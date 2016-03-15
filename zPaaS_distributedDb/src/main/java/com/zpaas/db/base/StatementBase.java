@@ -8,7 +8,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.db.common.ConnectionManager;
 import com.zpaas.db.distribute.SqlExecPlan;
@@ -21,7 +22,7 @@ import com.zpaas.db.sql.SQLType;
  * @version V1.0
  */
 public abstract class StatementBase implements Statement {
-	public static final Logger log = Logger.getLogger(StatementBase.class);
+	public static final Logger log = LoggerFactory.getLogger(StatementBase.class);
 	
 	private boolean closed = false;
 	private boolean closeOnCompletion = false;
@@ -69,7 +70,7 @@ public abstract class StatementBase implements Statement {
 		setResultSet(state.executeQuery(sql));
 		long endTime = System.currentTimeMillis();
 		if(log.isDebugEnabled()) {
-			log.debug("dbName(" + getDbName() + ") cost " + (endTime-beginTime) + " ms to execute sql: " + sql);
+			log.debug("dbName({}) cost {} ms to execute sql: {} ",getDbName(),(endTime-beginTime), sql);
 		}
 		return getResultSet();
 	}
@@ -97,7 +98,7 @@ public abstract class StatementBase implements Statement {
 		}
 		this.processDbRule(sql);
 		if(log.isDebugEnabled()) {
-			log.debug("dbName:" + getDbName());
+			log.debug("dbName:{}", getDbName());
 		}
 		Connection conn = getRealConnection(dbName);
 		Statement state = conn.createStatement();
@@ -115,8 +116,8 @@ public abstract class StatementBase implements Statement {
 		}
 		long endTime = System.currentTimeMillis();
 		if(log.isDebugEnabled()) {
-			log.debug("dbName(" + getDbName() + ") cost " + (endTime-beginTime) + " ms to execute sql: " + sql);
-			log.debug(result + " records were updated.");
+			log.debug("dbName({}) cost {} ms to execute sql: {}",getDbName(),(endTime-beginTime), sql);
+			log.debug("{} records were updated.", result);
 		}
 		return result;
 	}
@@ -253,7 +254,7 @@ public abstract class StatementBase implements Statement {
 	@Override
 	public void close() throws SQLException {
 		if(log.isDebugEnabled()) {
-			log.debug(this + " is closed.");
+			log.debug("{} is closed.", this);
 		}
 		this.closed = true;
 	}

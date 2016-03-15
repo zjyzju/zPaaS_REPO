@@ -4,7 +4,8 @@ import java.util.Iterator;
 import java.util.Properties;
 import java.util.Random;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -25,7 +26,7 @@ import com.zpaas.message.MessageSender;
  *
  */
 public class MessageSenderImpl implements ConfigurationWatcher, MessageSender {
-	public static final Logger log = Logger.getLogger(MessageSenderImpl.class);
+	public static final Logger log = LoggerFactory.getLogger(MessageSenderImpl.class);
 
 	private String confPath = "/com/zpaas/message/messageSender";
 
@@ -50,7 +51,7 @@ public class MessageSenderImpl implements ConfigurationWatcher, MessageSender {
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new MessageSender configuration is received: " + conf);
+			log.info("new MessageSender configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		@SuppressWarnings("rawtypes")

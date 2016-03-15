@@ -25,7 +25,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.db.sql.SQLType;
 
@@ -36,7 +37,7 @@ import com.zpaas.db.sql.SQLType;
  * @version V1.0
  */
 public class LogicDBPreparedStatement  extends LogicDBStatement implements PreparedStatement {
-	public static final Logger log = Logger.getLogger(LogicDBPreparedStatement.class);
+	public static final Logger log = LoggerFactory.getLogger(LogicDBPreparedStatement.class);
 	
 	private Map<Integer, Integer> typeMap = new HashMap<Integer,Integer>();
 	private Map<Integer,Object> valueMap = new HashMap<Integer,Object>();
@@ -67,13 +68,12 @@ public class LogicDBPreparedStatement  extends LogicDBStatement implements Prepa
 
 	@Override
 	public void addBatch() throws SQLException {
-		// TODO Auto-generated method stub
 		
 	}
 	
 	@Override
 	public int[] executeBatch() throws SQLException {
-		// TODO Auto-generated method stub
+		
 		return super.executeBatch();
 	}
 	
@@ -174,8 +174,8 @@ public class LogicDBPreparedStatement  extends LogicDBStatement implements Prepa
 		ResultSet rs = ps.executeQuery();
 		long endTime = System.currentTimeMillis();
 		if(log.isDebugEnabled()) {
-			log.debug("dbName(" + getDbName() + ") cost " + (endTime-beginTime) + " ms to execute sql: " + getSql());
-			log.debug(this.valueMap);
+			log.debug("dbName({}) cost {} ms to execute sql: {}",getDbName(), (endTime-beginTime), getSql());
+			log.debug(this.valueMap.toString());
 		}
 		return rs;
 	}
@@ -276,9 +276,8 @@ public class LogicDBPreparedStatement  extends LogicDBStatement implements Prepa
 		int i = ps.executeUpdate();
 		long endTime = System.currentTimeMillis();
 		if(log.isDebugEnabled()) {
-			log.debug("dbName(" + getDbName() + ") cost " + (endTime-beginTime) + " ms to execute sql: " + getSql());
-			log.debug(this.valueMap);
-			log.debug(i + " records were updated.");
+			log.debug("{} records were updated. dbName({}) cost {} ms to execute sql: {}",i ,getDbName(), (endTime-beginTime), getSql());
+			log.debug(this.valueMap.toString());
 		}
 		return i;
 	}

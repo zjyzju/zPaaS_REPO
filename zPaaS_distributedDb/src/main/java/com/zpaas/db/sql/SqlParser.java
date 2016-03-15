@@ -11,7 +11,8 @@ import org.antlr.v4.runtime.TokenStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNodeImpl;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.db.sql.parser.SQLLexer;
 import com.zpaas.db.sql.parser.SQLParser;
@@ -49,7 +50,7 @@ import com.zpaas.db.sql.parser.SQLParser.Table_subqueryContext;
  * @version V1.0
  */
 public class SqlParser {
-	public static final Logger log = Logger.getLogger(SqlParser.class);
+	public static final Logger log = LoggerFactory.getLogger(SqlParser.class);
 
 	/**
 	 * 使用ANTLR生成的SQL语句解析类对传入的SQL进行解析，返回一个ParseTree对象树
@@ -80,7 +81,7 @@ public class SqlParser {
 		ctx.setGroupElements(new ArrayList<String>());
 		parseSqlTree(tree, ctx);
 		if(log.isDebugEnabled()) {
-			log.debug(JSONObject.fromObject(ctx));
+			log.debug(JSONObject.fromObject(ctx).toString());
 		}
 		return ctx;
 	}

@@ -10,7 +10,8 @@ import javax.crypto.spec.IvParameterSpec;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -27,7 +28,7 @@ import com.zpaas.utils.PaasContextHolder;
  */
 public class DesCipherSVCImpl implements CipherSVC,ConfigurationWatcher {
 	
-	private static final Logger log = Logger.getLogger(DesCipherSVCImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(DesCipherSVCImpl.class);
 	
 	private static final String CIPHER_CFG_FILE_KEY = "cipher.cfg.file";
 	public static final String KEY_ALGORITHM = "DES";

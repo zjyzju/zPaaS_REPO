@@ -1,6 +1,7 @@
 package com.zpaas.message.v1;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.message.Message;
 import com.zpaas.message.MessageListener;
@@ -16,7 +17,7 @@ import kafka.consumer.KafkaStream;
  *
  */
 public class MessageProcessor implements Runnable {
-	public static final Logger log = Logger.getLogger(MessageProcessor.class);
+	public static final Logger log = LoggerFactory.getLogger(MessageProcessor.class);
 	
 	private String threadName = null;
 	private KafkaStream<String, Message> stream = null;
@@ -27,7 +28,7 @@ public class MessageProcessor implements Runnable {
 		this.stream = stream;
 		this.listener = listener;
 		if(log.isInfoEnabled()) {
-			log.info(this.threadName + " started");
+			log.info("{} started", this.threadName);
 		}
 	}
 	public void run() {
@@ -37,20 +38,20 @@ public class MessageProcessor implements Runnable {
 			try {
 				msg = it.next().message();
 				if(log.isDebugEnabled()) {
-					log.debug(threadName + " process msg:" + msg.toString());
+					log.debug("{} process msg: {}",threadName, msg.toString());
 				}
 				MessageStatus status = new MessageStatus();
 				listener.receiveMessage(msg, status);
 			} catch (Exception e) {
 				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			}catch (Error e) {
 				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			}
 		}
 		if(log.isInfoEnabled()) {
-			log.info(threadName + " is stopped");
+			log.info("{} is stopped", threadName);
 		}
 	}
 

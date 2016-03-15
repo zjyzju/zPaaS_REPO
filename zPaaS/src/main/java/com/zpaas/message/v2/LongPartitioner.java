@@ -4,10 +4,11 @@ import java.util.Map;
 
 import org.apache.kafka.clients.producer.Partitioner;
 import org.apache.kafka.common.Cluster;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LongPartitioner implements Partitioner {
-	public static final Logger log = Logger.getLogger(LongPartitioner.class);
+	public static final Logger log = LoggerFactory.getLogger(LongPartitioner.class);
 
 	@Override
 	public void configure(Map<String, ?> arg0) {

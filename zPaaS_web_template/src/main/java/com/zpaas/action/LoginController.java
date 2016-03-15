@@ -1,10 +1,11 @@
 package com.zpaas.action;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +22,7 @@ import com.zpaas.vo.LoginInfo;
 @Controller
 public class LoginController {
 
-	private static final Logger log = Logger.getLogger(LoginController.class);
+	private static final Logger log = LoggerFactory.getLogger(LoginController.class);
 	
 	//用于存放验证码Session
 	private static final String adminLoginValidImgSessionName = "adminLoginValidImgSessionName20140526";
@@ -30,7 +31,7 @@ public class LoginController {
 	//用于存放随机数
 	private static final String adminLoginpassRandomSessionName = "adminLoginpassRandomSessionName20140526";
 		
-	@Resource(name="transactionSVC")
+	
 	private TransactionSVC transactionSVC;
     
 

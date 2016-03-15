@@ -10,7 +10,8 @@ import java.util.Set;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -25,7 +26,7 @@ import com.zpaas.utils.SerializeUtil;
  *
  */
 public class RedisCacheClient {
-	private static final Logger log = Logger.getLogger(RedisCacheClient.class);
+	private static final Logger log = LoggerFactory.getLogger(RedisCacheClient.class);
 
 	private static final String HOST_KEY = "host";
 	private static final String PORT_KEY = "port";

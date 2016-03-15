@@ -6,7 +6,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.db.base.ConnectionBase;
 import com.zpaas.db.common.ConnectionManager;
@@ -21,7 +22,7 @@ import net.sf.json.JSONObject;
  * @version V1.0
  */
 public class LogicDBConnection extends ConnectionBase {
-	public static final Logger log = Logger.getLogger(LogicDBConnection.class);
+	public static final Logger log = LoggerFactory.getLogger(LogicDBConnection.class);
 	private JSONObject dbRule;
 	private ConnectionManager manager = null;
 	
@@ -151,12 +152,12 @@ public class LogicDBConnection extends ConnectionBase {
 	public void close() throws SQLException {
 		if(DistributedTransactionManager.isInTransaction()) {
 			if(log.isDebugEnabled()) {
-				log.debug(this + " is in transaction, abandon closing.");
+				log.debug("{} is in transaction, abandon closing.", this);
 			}
 			return;
 		}
 		if(log.isDebugEnabled()) {
-			log.debug(this + " is closed.");
+			log.debug("{} is closed.", this);
 		}
 		if(manager.getStatementList() != null && manager.getStatementList().size() > 0) {
 			for(Statement e : manager.getStatementList()) {
@@ -172,7 +173,7 @@ public class LogicDBConnection extends ConnectionBase {
 			for(Connection conn : manager.getConnMap().values()) {
 				try {
 					if(log.isDebugEnabled()) {
-						log.debug("close conn:" + conn);
+						log.debug("close conn: {}", conn);
 					}
 					conn.close();
 				} catch (Exception e) {
@@ -189,7 +190,7 @@ public class LogicDBConnection extends ConnectionBase {
 			return;
 		}
 		if(log.isDebugEnabled()) {
-			log.debug(this + " is commited.");
+			log.debug("{} is commited.", this);
 		}
 		if(manager.getConnMap() != null && manager.getConnMap().size() > 0) {
 			for(Connection conn : manager.getConnMap().values()) {
@@ -208,7 +209,7 @@ public class LogicDBConnection extends ConnectionBase {
 			return;
 		}
 		if(log.isDebugEnabled()) {
-			log.debug(this + " is rollbacked.");
+			log.debug("{} is rollbacked.", this);
 		}
 		if(manager.getConnMap() != null && manager.getConnMap().size() > 0) {
 			for(Connection conn : manager.getConnMap().values()) {

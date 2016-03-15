@@ -3,7 +3,8 @@ package com.zpaas.dtx.common;
 import java.util.Iterator;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -15,7 +16,7 @@ import kafka.producer.ProducerConfig;
 import net.sf.json.JSONObject;
 
 public class TransactionPublisher implements ConfigurationWatcher {
-	public static final Logger log = Logger.getLogger(TransactionPublisher.class);
+	public static final Logger log = LoggerFactory.getLogger(TransactionPublisher.class);
 
 	private String confPath = "/com/zpaas/tx/transactionPublisher";
 
@@ -38,7 +39,7 @@ public class TransactionPublisher implements ConfigurationWatcher {
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new TransactionPublisher configuration is received: " + conf);
+			log.info("new TransactionPublisher configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		@SuppressWarnings("rawtypes")

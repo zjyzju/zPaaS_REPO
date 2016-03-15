@@ -8,7 +8,8 @@ import java.util.Enumeration;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 通用工具类
@@ -16,7 +17,7 @@ import org.apache.log4j.Logger;
  *
  */
 public class CommonUtil {
-	public static final Logger log = Logger.getLogger(CommonUtil.class);
+	public static final Logger log = LoggerFactory.getLogger(CommonUtil.class);
 	
 	public static String getHostAddr() {
 		try {

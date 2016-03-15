@@ -12,7 +12,8 @@ import java.util.Set;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.cache.remote.RemoteCacheSVC;
 import com.zpaas.db.sql.Column;
@@ -30,7 +31,7 @@ import com.zpaas.db.sql.TableDistributeInfo;
  * @version V1.0
  */
 public class DistributedDBRule {
-	public static final Logger log = Logger.getLogger(DistributedDBRule.class);
+	public static final Logger log = LoggerFactory.getLogger(DistributedDBRule.class);
 
 	public static final String QUESTION_MARK = "question_mark_";// 替换？的字符串
 	public static final String DEFAULT_RULE = "defaultRule";
@@ -83,7 +84,7 @@ public class DistributedDBRule {
 		}
 		if (ctx != null) {// 如果能取到则直接返回
 			if (log.isTraceEnabled()) {
-				log.trace("get parsed sql:" + JSONArray.fromObject(ctx));
+				log.trace("get parsed sql: {}", JSONArray.fromObject(ctx));
 			}
 			return ctx;
 		} else {// 如果取不到则重新解析
@@ -96,8 +97,7 @@ public class DistributedDBRule {
 					sqlCache.put(sql, ctx);
 				}
 				if (log.isTraceEnabled()) {
-					log.trace("get parsed sql by sql parser:"
-							+ JSONArray.fromObject(ctx));
+					log.trace("get parsed sql by sql parser: {}", JSONArray.fromObject(ctx));
 				}
 				return ctx;
 			}
@@ -177,7 +177,7 @@ public class DistributedDBRule {
 			
 			if (keyTable == null) {
 				if (log.isTraceEnabled()) {
-					log.trace(JSONArray.fromObject(list));
+					log.trace(JSONArray.fromObject(list).toString());
 				}
 				return list;
 			}
@@ -201,14 +201,13 @@ public class DistributedDBRule {
 			}
 			list.add(0, keyTable);
 			if (log.isTraceEnabled()) {
-				log.trace(JSONArray.fromObject(list));
+				log.trace(JSONArray.fromObject(list).toString());
 			}
 			return list;
 		} else if (tables.size() == 0) {
-			throw new SQLException("invalid sql: can't get table from sql:"
-					+ sql);
+			throw new SQLException("invalid sql: can't get table from sql: {}", sql);
 		} else {
-			throw new SQLException("can't get distribute rule from sql:" + sql);
+			throw new SQLException("can't get distribute rule from sql:{}", sql);
 		}
 	}
 

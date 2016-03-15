@@ -2,7 +2,8 @@ package com.zpaas.log;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.message.Message;
 import com.zpaas.message.MessageListener;
@@ -14,7 +15,7 @@ import com.zpaas.message.MessageStatus;
  *
  */
 public class KafkaLogMessageListener implements MessageListener {
-	private static final Logger log = Logger.getLogger(KafkaLogMessageListener.class);
+	private static final Logger log = LoggerFactory.getLogger(KafkaLogMessageListener.class);
 	
 	private String logTopic = "paas_log_mongo_topic";
 	private LogSVC logWriter = null;
@@ -23,23 +24,23 @@ public class KafkaLogMessageListener implements MessageListener {
 		try {
 			if(logTopic.equals(message.getTopic())) {
 				if(log.isDebugEnabled()) {
-					log.debug("get log message: " + message.getMsg());
+					log.debug("get log message: {}", message.getMsg());
 				}
 				logWriter.write(JSONObject.fromObject(message.getMsg()));
 			}
 		} catch (Exception e) {
-			System.out.println("exception:" + e);
+			log.error(e.getMessage(), e);
 			if(logTopic.equals(message.getTopic())) {
 				if(message.getMsg() != null) {
-					log.error("process message failed: " + e + " message:" +  message.getMsg());				
+					log.error("process message failed: {} message: {}",e.getMessage(),  message.getMsg());				
 					logWriter.write(message.getMsg().toString());
 				}
 			}
 		}catch (Error e) {
-			System.out.println("process message failed: " + e + " message:" +  message.getMsg());
+			log.error(e.getMessage(), e);
 			if(logTopic.equals(message.getTopic())) {
 				if(message.getMsg() != null) {
-					log.error("process message failed: " + e + " message:" +  message.getMsg());				
+					log.error("process message failed: {} message: {}",e.getMessage(),  message.getMsg());					
 					logWriter.write(message.getMsg().toString());
 				}
 			}

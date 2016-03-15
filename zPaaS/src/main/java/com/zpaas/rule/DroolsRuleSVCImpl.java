@@ -7,7 +7,8 @@ import java.util.HashMap;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.drools.compiler.compiler.PackageBuilder;
 import org.drools.core.RuleBase;
 import org.drools.core.RuleBaseFactory;
@@ -24,7 +25,7 @@ import com.zpaas.file.FileManagerSVC;
  *
  */
 public class DroolsRuleSVCImpl  implements ConfigurationWatcher, RuleSVC{
-	public static final Logger log = Logger.getLogger(DroolsRuleSVCImpl.class);
+	public static final Logger log = LoggerFactory.getLogger(DroolsRuleSVCImpl.class);
 	
 	public static final String RULE_ID = "ruleId";
 	
@@ -81,7 +82,7 @@ public class DroolsRuleSVCImpl  implements ConfigurationWatcher, RuleSVC{
 			builder.addPackageFromDrl(reader);
 		} catch (Exception e) {
 			log.error(e.getMessage(),e);
-			log.error("load rule from drl file failed:" + e);
+			log.error("load rule from drl file failed: {}", e);
 			return null;
 		} 
 		base.addPackages(builder.getPackages());
@@ -99,7 +100,7 @@ public class DroolsRuleSVCImpl  implements ConfigurationWatcher, RuleSVC{
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new rule configuration is received: " + conf);
+			log.info("new rule configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		boolean changed = false;

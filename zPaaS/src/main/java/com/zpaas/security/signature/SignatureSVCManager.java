@@ -5,7 +5,8 @@ import java.util.HashMap;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -18,7 +19,7 @@ import com.zpaas.file.FileManagerSVC;
  *
  */
 public class SignatureSVCManager implements ConfigurationWatcher {
-	public static final Logger log = Logger.getLogger(SignatureSVCManager.class);
+	public static final Logger log = LoggerFactory.getLogger(SignatureSVCManager.class);
 	
 	private FileManagerSVC secureFileRepo = null;
 	private String confPath = "/com/zpaas/secure/signatureSVCManager";

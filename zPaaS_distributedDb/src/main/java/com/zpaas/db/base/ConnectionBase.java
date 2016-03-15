@@ -17,7 +17,8 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 实现Connection接口的基类
@@ -26,7 +27,7 @@ import org.apache.log4j.Logger;
  * @version V1.0
  */
 public abstract class ConnectionBase implements Connection {
-	public static final Logger log = Logger.getLogger(ConnectionBase.class);
+	public static final Logger log = LoggerFactory.getLogger(ConnectionBase.class);
 	
 	protected boolean closed = false;
 	private boolean autoCommit = true;

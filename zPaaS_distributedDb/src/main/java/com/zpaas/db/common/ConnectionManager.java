@@ -10,7 +10,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -20,7 +21,7 @@ import org.apache.log4j.Logger;
  * @version V1.0
  */
 public class ConnectionManager {
-	public static final Logger log = Logger.getLogger(ConnectionManager.class);
+	public static final Logger log = LoggerFactory.getLogger(ConnectionManager.class);
 	
 	private Map<String, Connection> connMap = new ConcurrentHashMap<String, Connection>();
 	private List<Statement> stateList = new Vector<Statement>();
@@ -42,14 +43,14 @@ public class ConnectionManager {
 					conn = ds.getConnection();
 					this.addConnection(dbName, conn);
 					if(log.isTraceEnabled()) {
-						log.trace("get new connection from  db: " + dbName);
+						log.trace("get new connection from  db: {}", dbName);
 					}
 				} catch (SQLException e) {
 					e.printStackTrace();
 				}				
 			} else {
 				if(log.isTraceEnabled()) {
-					log.trace("get connection from connection manager, db: " + dbName);
+					log.trace("get connection from connection manager, db: {}", dbName);
 				}
 			}
 			return conn;

@@ -8,7 +8,8 @@ import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.http.protocol.HTTP;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -21,7 +22,7 @@ import com.zpaas.PaasException;
  */
 public class HttpClientManagerSVCImpl implements ConfigurationWatcher,HttpClientManagerSVC {
 
-	private static final Logger log = Logger.getLogger(HttpClientManagerSVCImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(HttpClientManagerSVCImpl.class);
 		
 	private static final String CONNECTION_TIMEOUT = "connection.timeout";
 	private static final String CONNECTION_SOTIMEOUT = "connection.sotimeout";
@@ -48,7 +49,7 @@ public class HttpClientManagerSVCImpl implements ConfigurationWatcher,HttpClient
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new log configuration is received: " + conf);
+			log.info("new log configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		if(json.getString(CONNECTION_TIMEOUT) != null && !json.getString(CONNECTION_TIMEOUT).equals(connTimeout)) {

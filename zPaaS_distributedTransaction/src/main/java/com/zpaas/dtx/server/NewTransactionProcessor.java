@@ -2,7 +2,8 @@ package com.zpaas.dtx.server;
 
 import java.util.Date;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -14,7 +15,7 @@ import com.zpaas.message.MessageStatus;
 
 
 public class NewTransactionProcessor implements TransactionProcessor<TransactionContext>{
-	public static Logger log = Logger.getLogger(NewTransactionProcessor.class);
+	public static Logger log = LoggerFactory.getLogger(NewTransactionProcessor.class);
 	
 	private TransactionContextDAO contextDAO = null;
 	private TransactionTemplate tt = null;
@@ -26,7 +27,7 @@ public class NewTransactionProcessor implements TransactionProcessor<Transaction
 			@Override
 			public Object doInTransaction(TransactionStatus paramTransactionStatus) {
 				if(log.isInfoEnabled()) {
-					log.info("save new transaction context to db:" + context.toString());
+					log.info("save new transaction context to db:{}", context.toString());
 				}
 				try {
 					context.setStatusTime(new Date());

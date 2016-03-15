@@ -3,7 +3,8 @@ package com.zpaas.utils;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.MethodUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 
@@ -15,7 +16,7 @@ import java.lang.reflect.Field;
  */
 public class ObjectCopyUtil {
 	
-	public static final Logger log = Logger.getLogger(ObjectCopyUtil.class);
+	public static final Logger log = LoggerFactory.getLogger(ObjectCopyUtil.class);
 
 	/**
 	 * 复制整个对象的属性值到另外一个对象的对应的同名和同类型的属性，但名为sguid的属性不拷贝

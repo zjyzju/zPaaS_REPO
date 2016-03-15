@@ -11,7 +11,8 @@ import javax.sql.DataSource;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.core.io.ByteArrayResource;
 
@@ -30,7 +31,7 @@ import com.zpaas.file.FileManagerSVC;
  */
 @SuppressWarnings("deprecation")
 public class DistributedDataSource implements DataSource, ConfigurationWatcher {
-	public static final Logger log = Logger.getLogger(DistributedDataSource.class);
+	public static final Logger log = LoggerFactory.getLogger(DistributedDataSource.class);
 	public static final HashMap<String, LogicDBDataSource> logicDBMap = new HashMap<String, LogicDBDataSource>();
 	 
 	private String distributedDB="distributedDB";
@@ -64,7 +65,7 @@ public class DistributedDataSource implements DataSource, ConfigurationWatcher {
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new DistributedDataSource configuration is received: " + conf);
+			log.info("new DistributedDataSource configuration is received: {}", conf);
 		}
 		if(conf == null || conf.trim().length() == 0) {
 			log.error("DistributedDataSource configuration is empty.");
@@ -78,7 +79,7 @@ public class DistributedDataSource implements DataSource, ConfigurationWatcher {
 	
 	public void initDb() {
 		if(log.isDebugEnabled()) {
-			log.debug("init DistributedDataSource:" + distributedDB);
+			log.debug("init DistributedDataSource: {}", distributedDB);
 		}
 		JSONObject conf = JSONObject.fromObject(dbConf);
 		String filePath = conf.getString("fileId");
@@ -91,7 +92,6 @@ public class DistributedDataSource implements DataSource, ConfigurationWatcher {
 			ByteArrayResource res = new ByteArrayResource(fileManager.readFile(filePath));
 			ctx = new XmlBeanFactory(res);
 		} catch (Exception e) {
-			log.error("load db rule from file failed:" + e);
 			log.error(e.getMessage(),e);
 			return;
 		}
@@ -114,7 +114,7 @@ public class DistributedDataSource implements DataSource, ConfigurationWatcher {
 				LogicDBDataSource ds = (LogicDBDataSource)ctx.getBean(json.getString("logicDB"));
 				ds.setDbType(this.getDbType());
 				if(dbName == null || dbName.trim().length() == 0 || ds == null) {
-					log.error("invalid logicDB conf:" + i);
+					log.error("invalid logicDB conf: {}", i);
 				}
 				logicDBMap.put(dbName, ds);
 			}

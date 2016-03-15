@@ -2,7 +2,8 @@ package com.zpaas.file;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -17,7 +18,7 @@ import com.zpaas.utils.PaasContextHolder;
  */
 public class MongoFileManagerSVCImpl implements ConfigurationWatcher, FileManagerSVC{
 	
-	private static final Logger log = Logger.getLogger(MongoFileManagerSVCImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(MongoFileManagerSVCImpl.class);
 		
 	private static final String File_SERVER_KEY = "fileServer";
 	private static final String File_REPO_KEY = "fileRepo";
@@ -47,7 +48,7 @@ public class MongoFileManagerSVCImpl implements ConfigurationWatcher, FileManage
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new log configuration is received: " + conf);
+			log.info("new log configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		boolean changed = false;
@@ -71,7 +72,7 @@ public class MongoFileManagerSVCImpl implements ConfigurationWatcher, FileManage
 			if(fileServer != null) {
 				mongo = new MongoDBClient(fileServer,fileRepo, userName, password);
 				if(log.isInfoEnabled()) {
-					log.info("log server address is changed to " + fileServer);
+					log.info("log server address is changed to {}", fileServer);
 				}
 			}
 		}

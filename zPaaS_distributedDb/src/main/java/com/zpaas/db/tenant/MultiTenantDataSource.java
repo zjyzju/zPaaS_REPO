@@ -9,7 +9,8 @@ import java.util.Iterator;
 
 import javax.sql.DataSource;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.xml.XmlBeanFactory;
 import org.springframework.core.io.ByteArrayResource;
 
@@ -29,7 +30,7 @@ import net.sf.json.JSONObject;
  */
 @SuppressWarnings("deprecation")
 public class MultiTenantDataSource implements DataSource, ConfigurationWatcher {
-	public static final Logger log = Logger.getLogger(MultiTenantDataSource.class);
+	public static final Logger log = LoggerFactory.getLogger(MultiTenantDataSource.class);
 	private String multiTenantDB;
 	private String sqlType;
 	private JSONObject dbRule;
@@ -52,7 +53,7 @@ public class MultiTenantDataSource implements DataSource, ConfigurationWatcher {
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new MultiTenantDataSource configuration is received: " + conf);
+			log.info("new MultiTenantDataSource configuration is received: {}", conf);
 		}
 		if(conf == null || conf.trim().length() == 0) {
 			log.error("MultiTenantDataSource configuration is empty.");
@@ -68,8 +69,7 @@ public class MultiTenantDataSource implements DataSource, ConfigurationWatcher {
 		try {
 			dbRule = JSONObject.fromObject(dbConf);
 		} catch (Exception e) {
-			log.error("invalid json format:" + e + " dbConf is:" + dbConf);
-			e.printStackTrace();
+			log.error(e.getMessage(),e);
 			return;
 		}
 		
@@ -81,7 +81,7 @@ public class MultiTenantDataSource implements DataSource, ConfigurationWatcher {
 			}
 			if(log.isDebugEnabled()) {
 				log.debug("init MultiTenantDataSource:" + multiTenantDB);
-				log.debug("----dbRule:" + dbRule);
+				log.debug("----dbRule:{}", dbRule);
 			}
 			JSONObject distributedDBs = dbRule.getJSONObject("distributedDBs");
 			if(distributedDBs == null || distributedDBs.size() == 0) {
@@ -102,7 +102,6 @@ public class MultiTenantDataSource implements DataSource, ConfigurationWatcher {
 				ByteArrayResource res = new ByteArrayResource(fileManager.readFile(filePath));
 				ctx = new XmlBeanFactory(res);
 			} catch (Exception e) {
-				log.error("load db rule from file failed:" + e);
 				log.error(e.getMessage(),e);
 				return;
 			}
@@ -114,7 +113,7 @@ public class MultiTenantDataSource implements DataSource, ConfigurationWatcher {
 				String dbName = distributedDBs.getString(tenantId);
 				DistributedDataSource ds = (DistributedDataSource)ctx.getBean(dbName);
 				if(ds == null) {
-					log.error("init DistributedDataSource failed:" + dbName);
+					log.error("init DistributedDataSource failed: {}", dbName);
 				}
 				dbMap.put(tenantId, ds);
 			}

@@ -10,7 +10,8 @@ import java.util.Random;
 import javax.sql.DataSource;
 
 import org.apache.commons.dbcp.BasicDataSource;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -28,7 +29,7 @@ import net.sf.json.JSONObject;
  * @version V1.0
  */
 public class LogicDBDataSource implements DataSource, ConfigurationWatcher {
-	public static final Logger log = Logger.getLogger(LogicDBDataSource.class);
+	public static final Logger log = LoggerFactory.getLogger(LogicDBDataSource.class);
 	private String logicDB;
 	private String dbType;
 	private JSONObject dbRule;
@@ -53,7 +54,7 @@ public class LogicDBDataSource implements DataSource, ConfigurationWatcher {
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new LogicDBDataSource configuration is received: " + conf);
+			log.info("new LogicDBDataSource configuration is received: {}", conf);
 		}
 		if(conf == null || conf.trim().length() == 0) {
 			log.error("LogicDBDataSource configuration is empty.");
@@ -69,7 +70,6 @@ public class LogicDBDataSource implements DataSource, ConfigurationWatcher {
 		try {
 			dbRule = JSONObject.fromObject(dbConf);
 		} catch (Exception e) {
-			log.error("invalid json format:" + e + " dbConf is:" + dbConf);
 			log.error(e.getMessage(),e);
 			return;
 		}
@@ -81,8 +81,8 @@ public class LogicDBDataSource implements DataSource, ConfigurationWatcher {
 				return;
 			}
 			if(log.isDebugEnabled()) {
-				log.debug("init LogicDBDataSource:" + logicDB);
-				log.debug("----dbRule:" + dbRule);
+				log.debug("init LogicDBDataSource:{}", logicDB);
+				log.debug("----dbRule: {}", dbRule);
 			}
 			String dbName = dbRule.getString("master");
 			if(dbName == null || dbName.trim().length() == 0) {
@@ -90,7 +90,7 @@ public class LogicDBDataSource implements DataSource, ConfigurationWatcher {
 				return;
 			}
 			if(log.isDebugEnabled()) {
-				log.debug("create master DataSource:" + dbName);
+				log.debug("create master DataSource:{}", dbName);
 			}
 			
 			JSONObject conf = dbRule.getJSONObject(dbName);
@@ -100,46 +100,45 @@ public class LogicDBDataSource implements DataSource, ConfigurationWatcher {
 				if(driver != null && driver.trim().length() > 0) {
 					ds.setDriverClassName(driver);
 				}else {
-					log.error("invalid db conf of " + dbName + ": driver is empty.");
+					log.error("invalid db conf of {}: driver is empty.", dbName);
 				}
 			}else {
-				log.error("invalid db conf of " + dbName + ": driver is empty.");
+				log.error("invalid db conf of {}: driver is empty.", dbName);
 			}
 			if(conf.containsKey("username")) {
 				String username = conf.getString("username");
 				if(username != null && username.trim().length() >0) {
 					ds.setUsername(username);
 				}else {
-					log.error("invalid db conf of " + dbName + ": username is empty.");
+					log.error("invalid db conf of {}: username is empty.", dbName);
 				}
 			}else {
-				log.error("invalid db conf of " + dbName + ": username is empty.");
+				log.error("invalid db conf of {}: username is empty.", dbName);
 			}
 			if(conf.containsKey("password")) {
 				String password = null;
 				try {
 					password = CipherUtil.decrypt(conf.getString("password"));
 				} catch (Exception e) {
-					log.error("invalid password:" + e);
-					e.printStackTrace();
+					log.error(e.getMessage(),e);
 				}
 				if(password != null && password.trim().length() > 0) {
 					ds.setPassword(password);
 				}else {
-					log.error("invalid db conf of " + dbName + ": password is empty.");
+					log.error("invalid db conf of {}: password is empty.", dbName);
 				}
 			}else {
-				log.error("invalid db conf of " + dbName + ": password is empty.");
+				log.error("invalid db conf of {}: password is empty.", dbName);
 			}
 			if(conf.containsKey("url")) {
 				String url = conf.getString("url");
 				if(url != null && url.trim().length() > 0) {
 					ds.setUrl(url);
 				}else {
-					log.error("invalid db conf of " + dbName + ": url is empty.");
+					log.error("invalid db conf of {}: url is empty.", dbName);
 				}
 			}else {
-				log.error("invalid db conf of " + dbName + ": url is empty.");
+				log.error("invalid db conf of {}: url is empty.", dbName);
 			}
 			if(conf.containsKey("initSize")) {
 				ds.setInitialSize(conf.getInt("initSize"));
@@ -192,8 +191,8 @@ public class LogicDBDataSource implements DataSource, ConfigurationWatcher {
 					dbName = array.getJSONObject(i).getString("slave");
 					conf = dbRule.getJSONObject(dbName);
 					if(log.isDebugEnabled()) {
-						log.debug("create slave DataSource:" + dbName);
-						log.debug("slave DataSource:" + conf);
+						log.debug("create slave DataSource: {}", dbName);
+						log.debug("slave DataSource: {}", conf);
 					}					
 					ds = new BasicDataSource();
 					if(conf.containsKey("driver")) {
@@ -201,46 +200,45 @@ public class LogicDBDataSource implements DataSource, ConfigurationWatcher {
 						if(driver != null && driver.trim().length() > 0) {
 							ds.setDriverClassName(driver);
 						}else {
-							log.error("invalid db conf of " + dbName + ": driver is empty.");
+							log.error("invalid db conf of {}: driver is empty.", dbName);
 						}
 					}else {
-						log.error("invalid db conf of " + dbName + ": driver is empty.");
+						log.error("invalid db conf of {}: driver is empty.", dbName);
 					}
 					if(conf.containsKey("username")) {
 						String username = conf.getString("username");
 						if(username != null && username.trim().length() >0) {
 							ds.setUsername(username);
 						}else {
-							log.error("invalid db conf of " + dbName + ": username is empty.");
+							log.error("invalid db conf of {}: username is empty.", dbName);
 						}
 					}else {
-						log.error("invalid db conf of " + dbName + ": username is empty.");
+						log.error("invalid db conf of {}: username is empty.", dbName);
 					}
 					if(conf.containsKey("password")) {
 						String password = null;
 						try {
 							password = CipherUtil.decrypt(conf.getString("password"));
 						} catch (Exception e) {
-							log.error("invalid password:" + e);
-							e.printStackTrace();
+							log.error(e.getMessage(),e);
 						}
 						if(password != null && password.trim().length() > 0) {
 							ds.setPassword(password);
 						}else {
-							log.error("invalid db conf of " + dbName + ": password is empty.");
+							log.error("invalid db conf of {}: password is empty.", dbName);
 						}
 					}else {
-						log.error("invalid db conf of " + dbName + ": password is empty.");
+						log.error("invalid db conf of {}: password is empty.", dbName);
 					}
 					if(conf.containsKey("url")) {
 						String url = conf.getString("url");
 						if(url != null && url.trim().length() > 0) {
 							ds.setUrl(url);
 						}else {
-							log.error("invalid db conf of " + dbName + ": url is empty.");
+							log.error("invalid db conf of {}: url is empty.", dbName);
 						}
 					}else {
-						log.error("invalid db conf of " + dbName + ": url is empty.");
+						log.error("invalid db conf of {}: url is empty.", dbName);
 					}
 					if(conf.containsKey("initSize")) {
 						ds.setInitialSize(conf.getInt("initSize"));

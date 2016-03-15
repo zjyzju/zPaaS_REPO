@@ -10,7 +10,8 @@ import kafka.producer.KeyedMessage;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -23,7 +24,7 @@ import com.zpaas.dtx.server.dao.TransactionContextDAO;
 
 public class AbnormalTransactionProcessor implements ResourceExecutor,ConfigurationWatcher{
     
-	private static final Logger log = Logger.getLogger(AbnormalTransactionProcessor.class);
+	private static final Logger log = LoggerFactory.getLogger(AbnormalTransactionProcessor.class);
 	private static final String ABNORMAL_PROCESSOR_NUM = "abnormal.transaction.processor.num";
 	private static final String ABNORMAL_PROCESSOR_MIN_TASKNUM = "abnormal.transaction.processor.minTaskNum";
 	private static final String ABNORMAL_PROCESSOR_INTERVAL = "abnormal.transaction.processor.interval";
@@ -57,7 +58,7 @@ public class AbnormalTransactionProcessor implements ResourceExecutor,Configurat
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new AbnormalMessageProcessor configuration is received: " + conf);
+			log.info("new AbnormalMessageProcessor configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		@SuppressWarnings("rawtypes")
@@ -87,7 +88,7 @@ public class AbnormalTransactionProcessor implements ResourceExecutor,Configurat
 	@Override
 	public void prepareResourceAllocate(JSONArray resources) {
 		synchronized(lock) {
-			log.debug("prepareResourceAllocate:" + resources);
+			log.debug("prepareResourceAllocate:{}", resources);
 				if(this.resources != null && this.resources.size() > 0) {
 				int i=0;
 				while(isRunning) {
@@ -95,7 +96,7 @@ public class AbnormalTransactionProcessor implements ResourceExecutor,Configurat
 					try {
 						Thread.sleep(i * 1000);
 					} catch (InterruptedException e) {
-						e.printStackTrace();
+						log.error(e.getMessage(),e);
 					}
 				}
 				JSONArray tmp = new JSONArray();
@@ -111,14 +112,14 @@ public class AbnormalTransactionProcessor implements ResourceExecutor,Configurat
 	@Override
 	public void commitResourceAllocate(JSONArray resources) {
 		synchronized(lock) {
-            log.debug("commitResourceAllocate:" + resources);
+            log.debug("commitResourceAllocate:{}", resources);
 			this.resources = resources;
 		}
 	}
 
 	@Override
 	public boolean canReleaseResource(String resource) {
-		log.debug("canReleaseResource:" + this.resources);
+		log.debug("canReleaseResource:{}", this.resources);
 		if(this.resources != null && this.resources.contains(resource)) {
 			log.debug("canReleaseResource: false");
 			return false;
@@ -137,7 +138,7 @@ public class AbnormalTransactionProcessor implements ResourceExecutor,Configurat
 		}
 		isRunning = true;
 		if(log.isDebugEnabled()) {
-			log.debug("begin process abnormal message. resources is " + resources);
+			log.debug("begin process abnormal message. resources is {}", resources);
 		}
 		int count = resources.size();
 		Integer resourceId = null;
@@ -145,19 +146,19 @@ public class AbnormalTransactionProcessor implements ResourceExecutor,Configurat
 		for(int i=0; i<count; i++) {
 			resourceId = resources.getInt(i);
 			if(log.isDebugEnabled()) {
-				log.debug("process abnormal message of resource:" + resourceId);
+				log.debug("process abnormal message of resource:{}", resourceId);
 			}		
 			DistributeRuleAssist.setTableIndex(resourceId);
 			List<TransactionContext> list = contextDAO.queryAbnormalTransaction(interval);
 			DistributeRuleAssist.clearTableIndex();
 			if(list == null || list.size() == 0) {
 				if(log.isDebugEnabled()) {
-					log.debug("no abnormal message found of resource:" + resourceId);
+					log.debug("no abnormal message found of resource:{}", resourceId);
 				}
 				continue;
 			}
 			if(log.isDebugEnabled()) {
-				log.debug(list.size() + " abnormal messages found of resource:" + resourceId);
+				log.debug("{} abnormal messages found of resource:{}",list.size(), resourceId);
 			}
 			int size = list.size();
 			int min = 0;
@@ -171,7 +172,7 @@ public class AbnormalTransactionProcessor implements ResourceExecutor,Configurat
 				mod = 0;
 			}
 			if(log.isDebugEnabled()) {
-				log.debug("resource:" + resourceId + " dispatch task min:" + min + " mod:" + mod);
+				log.debug("resource:{} dispatch task min:{} mod:{}", resourceId,min, mod);
 			}
 			
 			List<TransactionContext> subList = null;
@@ -251,7 +252,7 @@ public class AbnormalTransactionProcessor implements ResourceExecutor,Configurat
 }
 
 class AbnormalProcessor extends Thread {
-	private static final Logger log = Logger.getLogger(AbnormalProcessor.class);
+	private static final Logger log = LoggerFactory.getLogger(AbnormalProcessor.class);
 	
 	private List<TransactionContext> transactions = null;
 	private TransactionPublisher publisher = null;
@@ -275,7 +276,7 @@ class AbnormalProcessor extends Thread {
 			return;
 		}
 		if(log.isDebugEnabled()) {
-			log.debug("AbnormalProcessor process transaction:" + transactions.size());
+			log.debug("AbnormalProcessor process transaction:{}", transactions.size());
 		}
 		for(TransactionContext transaction : transactions) {
 			TransactionContext deliverMessage = new TransactionContext();
@@ -295,7 +296,7 @@ class AbnormalProcessor extends Thread {
 						new KeyedMessage<String, TransactionContext>(
 								deliverMessage.getName(),String.valueOf(transaction.getTransactionId()),deliverMessage);
 				if(log.isDebugEnabled()) {
-					log.debug("AbnormalProcessor deliver message:" + keyedMsg);
+					log.debug("AbnormalProcessor deliver message:{}", keyedMsg);
 				}
 				publisher.getProducer().send(keyedMsg);
 				continue;
@@ -304,7 +305,7 @@ class AbnormalProcessor extends Thread {
 						new KeyedMessage<String, TransactionContext>(
 								checkerTopic,String.valueOf(transaction.getTransactionId()),deliverMessage);
 				if(log.isDebugEnabled()) {
-					log.debug("AbnormalProcessor deliver message:" + keyedMsg);
+					log.debug("AbnormalProcessor deliver message:{}", keyedMsg);
 				}
 				publisher.getProducer().send(keyedMsg);
 				continue;
@@ -345,7 +346,7 @@ class AbnormalProcessor extends Thread {
 								String.valueOf(transaction.getTransactionId()), 
 								deliverMessage);
 				if(log.isDebugEnabled()) {
-					log.debug("AbnormalProcessor deliver message:" + keyedMsg);
+					log.debug("AbnormalProcessor deliver message:{}", keyedMsg);
 				}
 				publisher.publish(keyedMsg);
 			}	

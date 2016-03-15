@@ -10,7 +10,8 @@ import java.util.Map;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -31,7 +32,7 @@ import com.zpaas.PaasException;
  *
  */
 public class RegistryManager implements ConfigurationWatcher {
-	public static final Logger log = Logger.getLogger(RegistryManager.class);
+	public static final Logger log = LoggerFactory.getLogger(RegistryManager.class);
 	
 	public static final String ZK_SERVER_KEY = "zk.server";
 	public static final String ROOT_PATH = "/monitorRegistry";
@@ -65,7 +66,7 @@ public class RegistryManager implements ConfigurationWatcher {
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new RegistryManager configuration is received: " + conf);
+			log.info("new RegistryManager configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		@SuppressWarnings("rawtypes")
@@ -89,7 +90,6 @@ public class RegistryManager implements ConfigurationWatcher {
 					zk.close();
 				} catch (InterruptedException e) {
 					log.error(e.getMessage(),e);
-					log.error("close old zk failed:" + e);
 				}
 			}
 			try {
@@ -111,8 +111,7 @@ public class RegistryManager implements ConfigurationWatcher {
 				selectLeaderThread.start();
 				watchMonitorRegistry();
 			} catch (IOException e) {
-				e.printStackTrace();
-				log.error("connect to zookeeper failed:" + e);
+				log.error(e.getMessage(),e);
 			}
 		}
 		
@@ -154,7 +153,7 @@ public class RegistryManager implements ConfigurationWatcher {
 	private Watcher wh = new Watcher() {
 		public void process(WatchedEvent event) {
 			if(log.isDebugEnabled()) {
-				log.debug("receive watch event:" + event.toString());
+				log.debug("receive watch event: {}", event.toString());
 			}
 			if(LEADER_PATH.equals(event.getPath())) {
 				if(EventType.NodeDeleted.equals(event.getType())) {
@@ -195,7 +194,7 @@ public class RegistryManager implements ConfigurationWatcher {
 		try {
 			List<String> monitorTargetTypes = zk.getChildren(ROOT_PATH, wh);
 			if(log.isDebugEnabled()) {
-				log.debug("monitor TargetTypes:" + monitorTargetTypes);
+				log.debug("monitor TargetTypes: {}", monitorTargetTypes);
 			}
 			monitorTargetType(monitorTargetTypes);
 		} catch (Exception e) {
@@ -230,7 +229,7 @@ public class RegistryManager implements ConfigurationWatcher {
 		try {
 			List<String> monitorTargets = zk.getChildren(monitorTargetType, wh);
 			if(log.isDebugEnabled()) {
-				log.debug(monitorTargetType + " has children:" + monitorTargets);
+				log.debug("{} has children: {}",monitorTargetType, monitorTargets);
 			}
 			Map<String, String> tmpMap = new HashMap<String, String>();
 			if(monitorTargets != null && monitorTargets.size() > 0) {
@@ -245,7 +244,7 @@ public class RegistryManager implements ConfigurationWatcher {
 				}
 			}
 			if(log.isDebugEnabled()) {
-				log.debug("old monitorTargetMap is:" + monitorTargetMap);
+				log.debug("old monitorTargetMap is: {}", monitorTargetMap);
 			}
 			if(isLeader) {
 				Iterator<String> ite = monitorTargetMap.keySet().iterator();
@@ -296,7 +295,7 @@ public class RegistryManager implements ConfigurationWatcher {
 			log.error(e.getMessage(),e);
 		} 
 		if(log.isDebugEnabled()) {
-			log.debug("new monitorTargetMap is:" + monitorTargetMap);
+			log.debug("new monitorTargetMap is: {}", monitorTargetMap);
 		}
 		
 	}

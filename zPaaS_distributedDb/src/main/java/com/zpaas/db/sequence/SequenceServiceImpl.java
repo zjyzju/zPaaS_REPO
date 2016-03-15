@@ -10,7 +10,8 @@ import javax.sql.DataSource;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.dbcp.BasicDataSource;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -25,7 +26,7 @@ import com.zpaas.utils.CipherUtil;
  * @version V1.0
  */
 public class SequenceServiceImpl implements ConfigurationWatcher,SequenceService{
-	public static final Logger log = Logger.getLogger(SequenceServiceImpl.class);
+	public static final Logger log = LoggerFactory.getLogger(SequenceServiceImpl.class);
 	
 	private int range = 1000;
 	private String sqlSelect;
@@ -76,7 +77,7 @@ public class SequenceServiceImpl implements ConfigurationWatcher,SequenceService
 				if(ret == 1) {
 					SequenceCache cache = new SequenceCache(currVal+1, currVal+range);
 					if(log.isDebugEnabled()) {
-						log.debug("get sequence cache:" + JSONObject.fromObject(cache));
+						log.debug("get sequence cache: {}", JSONObject.fromObject(cache));
 					}
 					return cache;
 				}				
@@ -117,7 +118,7 @@ public class SequenceServiceImpl implements ConfigurationWatcher,SequenceService
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new log configuration is received: " + conf);
+			log.info("new log configuration is received: {}", conf);
 		}
 		if(conf != null && !conf.equals(dbConf)) {
 			dbConf = conf;
@@ -136,7 +137,7 @@ public class SequenceServiceImpl implements ConfigurationWatcher,SequenceService
 		if(conf != null) {
 			if(log.isDebugEnabled()) {
 				log.debug("init Sequence DataSource");
-				log.debug("----dbRule:" + dbConf);
+				log.debug("----dbRule:{}", dbConf);
 			}
 			BasicDataSource ds = new BasicDataSource();
 			if(conf.containsKey("driver")) {

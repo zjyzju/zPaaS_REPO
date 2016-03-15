@@ -22,7 +22,8 @@ import kafka.serializer.StringDecoder;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -38,7 +39,7 @@ import com.zpaas.dtx.common.TransactionStatus;
 
 public class AssuredTransactionManager  implements ConfigurationWatcher {
 	
-	public static final Logger log = Logger.getLogger(AssuredTransactionManager.class);
+	public static final Logger log = LoggerFactory.getLogger(AssuredTransactionManager.class);
 	
 	private static final String ASSURED_TRANSACTION_MANAGER_TOPIC = "assured.transaction.manager.topic";
 	private static final String ASSURED_TRANSACTION_CHECKER_TOPIC = "assured.transaction.checker.topic";
@@ -74,7 +75,7 @@ public class AssuredTransactionManager  implements ConfigurationWatcher {
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new AssuredTransactionManager configuration is received: " + conf);
+			log.info("new AssuredTransactionManager configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		@SuppressWarnings("rawtypes")
@@ -172,26 +173,26 @@ public class AssuredTransactionManager  implements ConfigurationWatcher {
 		}
 		if(oldConsumer != null) {
 			if(log.isDebugEnabled()) {
-				log.debug("old consumer is closed: " + oldConsumer);
+				log.debug("old consumer is closed: {}", oldConsumer);
 			}
 			oldConsumer.shutdown();
 		}
 		if(oldExecutor != null) {
 			if(log.isDebugEnabled()) {
-				log.debug("begin to close old executor: " + oldExecutor);
+				log.debug("begin to close old executor: {}", oldExecutor);
 			}
 			oldExecutor.shutdown();
 			try {
 				while(!oldExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
 					if(log.isDebugEnabled()) {
-						log.debug("old executor is not closed: " + oldExecutor);
+						log.debug("old executor is not closed: {}", oldExecutor);
 					}
 				}
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				log.error(e.getMessage(),e);
 			}
 			if(log.isDebugEnabled()) {
-				log.debug("old executor is closed: " + oldExecutor);
+				log.debug("old executor is closed: {}", oldExecutor);
 			}
 		}
 	}
@@ -216,10 +217,10 @@ public class AssuredTransactionManager  implements ConfigurationWatcher {
 		KeyedMessage<String, TransactionContext> transactionMessage = 
 				new KeyedMessage<String, TransactionContext>(transactionManagerTopic,String.valueOf(id), context);
 		if(log.isInfoEnabled()) {
-			log.info("initiate new transaction:" + context.getTransactionId());
+			log.info("initiate new transaction: {}", context.getTransactionId());
 		}
 		if(!publisher.publish(transactionMessage)) {
-			log.error("publish transaction failed: " + context.getTransactionId() + " new status:" + context.getStatus());
+			log.error("publish transaction failed: {} new status: {}",context.getTransactionId(), context.getStatus());
 			return ;
 		}
 		AssuredTransactionExecutor executor = 
@@ -304,7 +305,7 @@ public class AssuredTransactionManager  implements ConfigurationWatcher {
 }
 
 class AssuredTransactionCheckProcessor implements Runnable {
-	public static final Logger log = Logger.getLogger(AssuredTransactionCheckProcessor.class);
+	public static final Logger log = LoggerFactory.getLogger(AssuredTransactionCheckProcessor.class);
 	
 	private String checkerName = null;
 	
@@ -322,7 +323,7 @@ class AssuredTransactionCheckProcessor implements Runnable {
 		this.transactionManagerTopic = transactionManagerTopic;
 		this.transactionChecker = transactionChecker;
 		if(log.isInfoEnabled()) {
-			log.info(this.checkerName + " started");
+			log.info("{} started", this.checkerName);
 		}
 	}
 	public void run() {
@@ -332,44 +333,42 @@ class AssuredTransactionCheckProcessor implements Runnable {
 			try {
 				msg = it.next().message();
 				if(log.isDebugEnabled()) {
-					log.debug(checkerName + " check transaction:" + msg.toString());
+					log.debug("{} check transaction:{}",this.checkerName, msg.toString());
 				}
 				TransactionStatus status = new TransactionStatus();
 				transactionChecker.checkTransaction(msg, status);
 				if(status.isRollbackOnly()) {
 					msg.setStatus(TransactionContext.TRANSACTION_STATUS_ROLLBACK);
 					if(log.isDebugEnabled()) {
-						log.debug("the transction:" + msg.getTransactionId() + " has bean rollbacked.");
+						log.debug("the transction:{} has bean rollbacked.", msg.getTransactionId());
 					}
 				}else {
 					msg.setStatus(TransactionContext.TRANSACTION_STATUS_COMMIT);									
 					if(log.isDebugEnabled()) {
-						log.debug("the transction:" + msg.getTransactionId() + " has been commited.");
+						log.debug("the transction:{} has been commited.", msg.getTransactionId());
 					}
 				}
 				KeyedMessage<String, TransactionContext> transactionMessage = 
 						new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
 								String.valueOf(msg.getTransactionId()), msg);
 				if(!publisher.publish(transactionMessage)) {
-					log.error("publish transaction failed: " + msg.getTransactionId() + " new status:" + msg.getStatus());
+					log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			} catch (Error e) {
-				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			}			
 		}
 		if(log.isInfoEnabled()) {
-			log.info(checkerName + " is stopped");
+			log.info("{} is stopped", checkerName);
 		}
 	}
 
 }
 
 class AssuredAbnormalTransactionProcessor implements Runnable {
-	public static final Logger log = Logger.getLogger(AssuredAbnormalTransactionProcessor.class);
+	public static final Logger log = LoggerFactory.getLogger(AssuredAbnormalTransactionProcessor.class);
 	
 	private String processorName = null;
 	private String subTransaction = null;
@@ -389,7 +388,7 @@ class AssuredAbnormalTransactionProcessor implements Runnable {
 		this.subs = subs;
 		this.subTransaction = subTransaction;
 		if(log.isInfoEnabled()) {
-			log.info(this.processorName + " started");
+			log.info("{} started", this.processorName);
 		}
 	}
 	public void run() {
@@ -400,7 +399,7 @@ class AssuredAbnormalTransactionProcessor implements Runnable {
 			try {
 				msg = it.next().message();
 				if(log.isDebugEnabled()) {
-					log.debug(processorName + " process abnormal transaction:" + msg.toString());
+					log.debug("{} process abnormal transaction:{}",this.processorName, msg.toString());
 				}
 				AssuredTransactionStatus status = new AssuredTransactionStatus();
 				JSONObject ctx = JSONObject.fromObject(msg.getContent());
@@ -409,7 +408,7 @@ class AssuredAbnormalTransactionProcessor implements Runnable {
 				String subKey = (String)DistributedTransactionManager.getConnectionMap().keySet().iterator().next();
 				subConn = DistributedTransactionManager.getConnectionMap().get(subKey);
 				if(DistributedTransactionManager.getConnectionMap().size() != 1) {
-					log.error("sub transaction only can be assigned with one connection:" + 
+					log.error("sub transaction only can be assigned with one connection:{}", 
 							DistributedTransactionManager.getConnectionMap());
 					status.setRollbackOnly();
 				}
@@ -418,53 +417,48 @@ class AssuredAbnormalTransactionProcessor implements Runnable {
 					try {
 						subConn.rollback();
 					} catch (Exception e) {
-						e.printStackTrace();
-						log.error("rollback transaction failed:" + subTransaction);
+						log.error(e.getMessage(),e);
 					}
 					if(log.isDebugEnabled()) {
-						log.debug("the sub transction:" + subTransaction + " of " + msg.getTransactionId() + " failed.");
+						log.debug("the sub transction:{} of {} failed.",subTransaction,msg.getTransactionId());
 					}
 				}else {
 					try {
 						subConn.commit();
 					} catch (Exception e) {
-						e.printStackTrace();
-						log.error("commit transaction failed.");
+						log.error(e.getMessage(),e);
 						return;
 					}
 					msg.setStatus(TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FINISH);	
 					msg.setParticipant(subTransaction);
 					if(log.isDebugEnabled()) {
-						log.debug("the sub transction:" + subTransaction + " of " + msg.getTransactionId() + " has been commited.");
+						log.debug("the sub transction:{} of {} has been commited.",subTransaction,msg.getTransactionId());
 					}
 					KeyedMessage<String, TransactionContext> transactionMessage = 
 							new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
 									String.valueOf(msg.getTransactionId()), msg);
 					if(!publisher.publish(transactionMessage)) {
-						log.error("publish transaction failed: " + msg.getTransactionId() + " new status:" + msg.getStatus());
+						log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
 					}
 				}
 				
 			} catch (Exception e) {
-				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			} catch (Error e) {
-				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			} finally {
 				if(subConn != null) {
 					try {
 						subConn.close();
 					} catch (SQLException e) {
-						e.printStackTrace();
-						log.error("close connection failed.");
+						log.error(e.getMessage(),e);
 					}
 				}
 				DistributedTransactionManager.endTransaction();
 			}
 		}
 		if(log.isInfoEnabled()) {
-			log.info(processorName + " is stopped");
+			log.info("{} is stopped", processorName);
 		}
 	}
 

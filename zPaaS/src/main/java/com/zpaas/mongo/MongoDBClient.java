@@ -11,7 +11,8 @@ import java.util.Map;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBObject;
@@ -31,7 +32,7 @@ import com.zpaas.utils.CipherUtil;
  *
  */
 public class MongoDBClient {
-	private static final Logger log = Logger.getLogger(MongoDBClient.class);
+	private static final Logger log = LoggerFactory.getLogger(MongoDBClient.class);
 	
 	private static final String IP_KEY = "ip";
 	private static final String PORT_KEY = "port";

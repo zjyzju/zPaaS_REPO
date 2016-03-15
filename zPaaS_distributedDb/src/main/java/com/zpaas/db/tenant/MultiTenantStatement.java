@@ -5,7 +5,8 @@ import java.sql.SQLException;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.db.base.ConnectionBase;
 import com.zpaas.db.base.StatementBase;
@@ -18,7 +19,7 @@ import com.zpaas.db.distribute.DistributeRuleAssist;
  * @version V1.0
  */
 public class MultiTenantStatement extends StatementBase {
-	public static final Logger log = Logger.getLogger(MultiTenantStatement.class);
+	public static final Logger log = LoggerFactory.getLogger(MultiTenantStatement.class);
 	
 	
 	private JSONObject dbRule;	
@@ -27,7 +28,7 @@ public class MultiTenantStatement extends StatementBase {
 	public String selectDb() {
 		String tenantId = DistributeRuleAssist.getTenant();
 		if(tenantId == null || tenantId.trim().length() == 0) {
-			log.error("invalid tenantId:" + tenantId);
+			log.error("invalid tenantId: {}", tenantId);
 			return null;
 		}
 		return tenantId;
@@ -36,7 +37,7 @@ public class MultiTenantStatement extends StatementBase {
 	protected void processDbRule(String sql) {
 		setDbName(selectDb());
 		if(log.isTraceEnabled()) {
-			log.trace("select db(" + this.getDbName() + ") to execute sql");
+			log.trace("select db({}) to execute sql", this.getDbName());
 		}
 	}
 	

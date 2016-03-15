@@ -20,7 +20,8 @@ import kafka.producer.KeyedMessage;
 import kafka.serializer.StringDecoder;
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -39,7 +40,7 @@ import com.zpaas.utils.CommonUtil;
 
 
 public class TransactionListenerManager implements ConfigurationWatcher{
-	public static final Logger log = Logger.getLogger(TransactionListenerManager.class);
+	public static final Logger log = LoggerFactory.getLogger(TransactionListenerManager.class);
 	
 	private static final String TRANSACTION_TOPIC = "transaction.topic";
 	private static final String LISTENER_NUM = "listener.num";
@@ -99,7 +100,7 @@ public class TransactionListenerManager implements ConfigurationWatcher{
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new TransactionListenerManager configuration is received: " + conf);
+			log.info("new TransactionListenerManager configuration is received: {}", conf);
 		}		
 		JSONObject json = JSONObject.fromObject(conf);
 		@SuppressWarnings("rawtypes")
@@ -252,26 +253,26 @@ public class TransactionListenerManager implements ConfigurationWatcher{
 		}
 		if(oldConsumer != null) {
 			if(log.isDebugEnabled()) {
-				log.debug("old consumer is closed: " + oldConsumer);
+				log.debug("old consumer is closed: {}", oldConsumer);
 			}
 			oldConsumer.shutdown();
 		}
 		if(oldExecutor != null) {
 			if(log.isDebugEnabled()) {
-				log.debug("begin to close old executor: " + oldExecutor);
+				log.debug("begin to close old executor: {}", oldExecutor);
 			}
 			oldExecutor.shutdown();
 			try {
 				while(!oldExecutor.awaitTermination(1, TimeUnit.SECONDS)) {
 					if(log.isDebugEnabled()) {
-						log.debug("old executor is not closed: " + oldExecutor);
+						log.debug("old executor is not closed: {}", oldExecutor);
 					}
 				}
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			if(log.isDebugEnabled()) {
-				log.debug("old executor is closed: " + oldExecutor);
+				log.debug("old executor is closed: {}", oldExecutor);
 			}
 		}
 	}
@@ -328,7 +329,7 @@ public class TransactionListenerManager implements ConfigurationWatcher{
 }
 
 class TransactionListenerProcessor implements Runnable {
-	public static final Logger log = Logger.getLogger(TransactionListenerProcessor.class);
+	public static final Logger log = LoggerFactory.getLogger(TransactionListenerProcessor.class);
 	
 	private String listenerName = null;
 	private KafkaStream<String, TransactionContext> stream = null;
@@ -346,7 +347,7 @@ class TransactionListenerProcessor implements Runnable {
 		this.listener = listener;
 		this.participant = participant;
 		if(log.isInfoEnabled()) {
-			log.info(this.listenerName + " started");
+			log.info("{} started", this.listenerName);
 		}
 	}
 	public void run() {
@@ -355,44 +356,42 @@ class TransactionListenerProcessor implements Runnable {
 		while(it.hasNext() ) {
 			try {
 				msg = it.next().message();				
-				log.info(listenerName + " TransactionListenerProcessor process transaction:" + msg.toString());
+				log.info("{} TransactionListenerProcessor process transaction:{}",this.listenerName, msg.toString());
 				JSONObject content = null;
 				if(msg.getContent() != null && msg.getContent().trim().length() > 0) {
 					content = JSONObject.fromObject(msg.getContent());
 				}
 				TransactionStatus status = new TransactionStatus();
 				if(msg.getStartTime() !=  null) {
-					log.warn("transaction:" + msg.getTransactionId() + " cost:" + (System.currentTimeMillis()-msg.getStartTime()));
+					log.warn("transaction:{} cost:{}",msg.getTransactionId(), (System.currentTimeMillis()-msg.getStartTime()));
 				}
 				listener.joinTransaction(content, status,msg.getName());
 				if(status.isRollbackOnly()) {
 					msg.setStatus(TransactionContext.TRANSACTION_STATUS_PART_FAILED);
 					if(log.isDebugEnabled()) {
-						log.debug("listener rollback the message:" + msg.getTransactionId());
+						log.debug("listener rollback the message:{}", msg.getTransactionId());
 					}
 				}else {
 					msg.setStatus(TransactionContext.TRANSACTION_STATUS_PART_SUCCEED);									
 					if(log.isDebugEnabled()) {
-						log.debug("listener commit the message:" + msg.getTransactionId());
+						log.debug("listener commit the message:{}", msg.getTransactionId());
 					}
 				}
 				msg.setParticipant(participant);	
 				KeyedMessage<String, TransactionContext> transactionMessage = new KeyedMessage<String, TransactionContext>(
 						transactionManagerTopic,String.valueOf(msg.getTransactionId()), msg);
 				if(!publisher.publish(transactionMessage)) {
-					log.error("publish transaction failed: " + msg.getTransactionId() + " new status:" + msg.getStatus());
+					log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			} catch (Error e) {
-				e.printStackTrace();
-				log.error("exception:" + e);
+				log.error(e.getMessage(),e);
 			}
 			
 		}
 		if(log.isInfoEnabled()) {
-			log.info(listenerName + " is stopped");
+			log.info("{} is stopped.", listenerName);
 		}
 	}
 

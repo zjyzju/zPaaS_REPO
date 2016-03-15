@@ -10,7 +10,8 @@ import java.util.Properties;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -32,7 +33,7 @@ import com.zpaas.utils.CommonUtil;
  *
  */
 public abstract class MonitorProbeBase implements ConfigurationWatcher {
-	public static final Logger log = Logger.getLogger(MonitorProbeBase.class);
+	public static final Logger log = LoggerFactory.getLogger(MonitorProbeBase.class);
 	
 	public static final String ZK_SERVER_KEY = "zk.server";
 	public static final String ROOT_PATH = "/monitorRegistry";
@@ -62,7 +63,7 @@ public abstract class MonitorProbeBase implements ConfigurationWatcher {
 
 	public void process(String conf) {
 		if (log.isInfoEnabled()) {
-			log.info("new MonitorProbe configuration is received: " + conf);
+			log.info("new MonitorProbe configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		@SuppressWarnings("rawtypes")
@@ -101,7 +102,6 @@ public abstract class MonitorProbeBase implements ConfigurationWatcher {
 					zk.close();
 				} catch (InterruptedException e) {
 					log.error(e.getMessage(),e);
-					log.error("close old zk failed:" + e);
 				}
 			}
 			try {
@@ -109,7 +109,6 @@ public abstract class MonitorProbeBase implements ConfigurationWatcher {
 				watchMonitorRegistry();
 			} catch (IOException e) {
 				log.error(e.getMessage(),e);
-				log.error("connect to zookeeper failed:" + e);
 			}
 		}
 		if (changed) {
@@ -120,7 +119,7 @@ public abstract class MonitorProbeBase implements ConfigurationWatcher {
 	private Watcher wh = new Watcher() {
 		public void process(WatchedEvent event) {
 			if(log.isDebugEnabled()) {
-				log.debug("receive watch event:" + event.toString());
+				log.debug("receive watch event: {}", event.toString());
 			}
 			if(EventType.NodeChildrenChanged.equals(event.getType())) {
 				if(ROOT_PATH.equals(event.getPath())) {

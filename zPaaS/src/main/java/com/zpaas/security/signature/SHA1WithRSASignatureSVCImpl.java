@@ -13,7 +13,8 @@ import java.security.cert.CertificateFactory;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
@@ -29,7 +30,7 @@ import com.zpaas.utils.CommonUtil;
  *
  */
 public class SHA1WithRSASignatureSVCImpl implements ConfigurationWatcher, SignatureSVC {
-	public static final Logger log = Logger.getLogger(SHA1WithRSASignatureSVCImpl.class);
+	public static final Logger log = LoggerFactory.getLogger(SHA1WithRSASignatureSVCImpl.class);
 	
 	public static final String JKS = "JKS";
 	public static final String PKCS12 = "PKCS12";
@@ -280,7 +281,7 @@ public class SHA1WithRSASignatureSVCImpl implements ConfigurationWatcher, Signat
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
-			log.error(e.getStackTrace());
+			log.error(e.getMessage(),e);
 			return false;
 		} 
 	}
@@ -320,7 +321,7 @@ public class SHA1WithRSASignatureSVCImpl implements ConfigurationWatcher, Signat
 			return true;
 		} catch (Exception e) {
 			e.printStackTrace();
-			log.error(e.getStackTrace());
+			log.error(e.getMessage(),e);
 			return false;
 		} 
 	}

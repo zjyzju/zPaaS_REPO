@@ -5,7 +5,8 @@ import java.util.Map;
 
 import net.sf.json.JSONObject;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -20,7 +21,7 @@ import com.zpaas.mongo.MongoDBClient;
  *
  */
 public class MongoLogSVCImpl implements ConfigurationWatcher, LogSVC{
-	private static final Logger log = Logger.getLogger(MongoLogSVCImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(MongoLogSVCImpl.class);
 	
 	private String confPath = "/com/zpaas/log/logSVC";
 	
@@ -53,7 +54,7 @@ public class MongoLogSVCImpl implements ConfigurationWatcher, LogSVC{
 	
 	public void process(String conf) {
 		if(log.isInfoEnabled()) {
-			log.info("new log configuration is received: " + conf);
+			log.info("new log configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
 		boolean changed = false;
@@ -80,7 +81,7 @@ public class MongoLogSVCImpl implements ConfigurationWatcher, LogSVC{
 			if(logServer != null) {
 				mongo = new MongoDBClient(logServer,logRepo, userName, password);
 				if(log.isInfoEnabled()) {
-					log.info("log server address is changed to " + logServer);
+					log.info("log server address is changed to {}", logServer);
 				}
 			}
 		}
