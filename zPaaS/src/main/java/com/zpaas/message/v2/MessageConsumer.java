@@ -38,6 +38,7 @@ public class MessageConsumer implements ConfigurationWatcher{
 	
 	private List<KafkaConsumer<String, Message>> consumers = null;
 	private ExecutorService executor = null;
+	private List<MessageProcessor> processorList = null;
 	private ArrayList<String> monitorTopicList = null;
 	private String groupId = null;
 	
@@ -76,7 +77,7 @@ public class MessageConsumer implements ConfigurationWatcher{
 			props = new Properties();
 			changed = true;
 		}
-		props.put("group.id", groupId);
+		
 		if(keys != null) {
 			String key = null;
 			while(keys.hasNext()) {
@@ -96,10 +97,13 @@ public class MessageConsumer implements ConfigurationWatcher{
 				}
 			}
 		}
+		props.put("group.id", groupId);
+		
 		if(changed || threadNumChanged) {
-			stopConsumeMessage(executor, consumers);
+			stopConsumeMessage(processorList, executor, consumers);
 			consumers = new ArrayList<>();
 			if(monitorTopicList != null && monitorTopicList.size() > 0 && nThreads > 0) {
+				
 				for(int i=0; i<nThreads; i++) {
 					consumers.add(new KafkaConsumer<String, Message>(props));
 				}
@@ -119,26 +123,31 @@ public class MessageConsumer implements ConfigurationWatcher{
 		
 		executor = Executors.newFixedThreadPool(nThreads);
 		int i=0;
+		processorList = new ArrayList<>();
 		for(KafkaConsumer<String, Message> consumer : consumers) {
 			consumer.subscribe(monitorTopicList);
-			executor.execute(new MessageProcessor(i, consumer, listener));
+			MessageProcessor processor = new MessageProcessor(i, consumer, listener);
+			processorList.add(processor);
+			executor.execute(processor);
 			i++;
 		}
 		
 	}
 	
-	public void stopConsumeMessage(ExecutorService oldExecutor, List<KafkaConsumer<String, Message>> oldConsumers) {
+	public void stopConsumeMessage(List<MessageProcessor> processorList, ExecutorService oldExecutor, List<KafkaConsumer<String, Message>> oldConsumers) {
 		if(log.isInfoEnabled()) {
 			log.info("stop consume message...");
 		}
-		if(oldConsumers != null) {
+		
+		if(processorList != null) {
 			if(log.isInfoEnabled()) {
-				log.info("old consumer is closed: {}", oldConsumers);
+				log.info("old processor is closed: {}", processorList);
 			}
-			for(KafkaConsumer<String, Message> consumer : oldConsumers) {
-				consumer.close();
+			for(MessageProcessor processor : processorList) {
+				processor.stop();
 			}
 		}
+		
 		if(oldExecutor != null) {
 			if(log.isInfoEnabled()) {
 				log.info("begin to close old executor: {}", oldExecutor);
@@ -155,6 +164,14 @@ public class MessageConsumer implements ConfigurationWatcher{
 			}
 			if(log.isInfoEnabled()) {
 				log.info("old executor is closed: {}", oldExecutor);
+			}
+		}
+		if(oldConsumers != null) {
+			if(log.isInfoEnabled()) {
+				log.info("old consumer is closed: {}", oldConsumers);
+			}
+			for(KafkaConsumer<String, Message> consumer : oldConsumers) {
+				consumer.close();
 			}
 		}
 	}

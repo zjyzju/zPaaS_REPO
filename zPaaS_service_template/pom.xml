@@ -61,12 +61,12 @@
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS</artifactId>
-			<version>1.0.1-RELEASE</version>
+			<version>1.0.3-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>distributedDb</artifactId>
-			<version>1.0.1-RELEASE</version>
+			<version>1.0.3-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
