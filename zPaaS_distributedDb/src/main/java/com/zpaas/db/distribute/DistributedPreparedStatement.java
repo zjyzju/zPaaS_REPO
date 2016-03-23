@@ -108,7 +108,7 @@ public class DistributedPreparedStatement extends DistributedStatement
 		ResultSet rs = plan.executeQuery();
 		long endTime = System.currentTimeMillis();
 		if(log.isDebugEnabled()) {
-			log.debug("distributedDb({}) cost {} ms to execute sql: ",getDbName(),(endTime-beginTime), sql);
+			log.debug("distributedDb({}) cost {} ms to execute sql: {}",getDbName(),(endTime-beginTime), sql);
 			log.debug(this.valueMap.toString());
 		}
 		return rs;
@@ -121,7 +121,7 @@ public class DistributedPreparedStatement extends DistributedStatement
 		int result = plan.executeUpdate(-1,null,null);
 		long endTime = System.currentTimeMillis();
 		if(log.isDebugEnabled()) {
-			log.debug("distributedDb({}) cost {} ms to execute sql: ",getDbName(),(endTime-beginTime), sql);
+			log.debug("distributedDb({}) cost {} ms to execute sql: {}",getDbName(),(endTime-beginTime), sql);
 			log.debug(this.valueMap.toString());
 		}
 		return result;
