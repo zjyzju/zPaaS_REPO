@@ -86,6 +86,13 @@ public class DroolsRuleSVCImpl  implements ConfigurationWatcher, RuleSVC{
 			return null;
 		} 
 		base.addPackages(builder.getPackages());
+		if(builder.hasErrors()) {
+			try {
+				throw new Exception(builder.getErrors().toString());
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 		return base;
 	}
 
