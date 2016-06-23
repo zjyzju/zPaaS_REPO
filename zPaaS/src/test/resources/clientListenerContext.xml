@@ -13,7 +13,7 @@
         <property name="auth" value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf"/>
     </bean> 
     <bean id="messageListener" class="com.zpaas.test.MessageListenerSample"/>
-    <bean id="messageConsumer" class="com.zpaas.message.v1.MessageConsumer" init-method="init">
+    <!-- <bean id="messageConsumer" class="com.zpaas.message.v1.MessageConsumer" init-method="init">
         <property name="cc" ref="cc"/>
         <property name="listener" ref="messageListener"/>
         <property name="confPath" value="/zpaas/message/messageConsumer"/>
@@ -23,7 +23,7 @@
 	        	<value>test</value>
 	        </list>
         </property>
-    </bean>
+    </bean> -->
     <bean id="messageConsumerV2" class="com.zpaas.message.v2.MessageConsumer" init-method="init">
         <property name="cc" ref="cc"/>
         <property name="listener" ref="messageListener"/>

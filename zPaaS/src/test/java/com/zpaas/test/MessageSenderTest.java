@@ -34,6 +34,7 @@ class MessageThread extends Thread {
 	public void run() {
 		for(int i=0; i<10; i++) {
 			sender.sendMessage("thread " + id + ": test" + i, "test");
+			System.out.println("send message:" + "thread " + id + ": test" + i);
 		}
 	}
 }
