@@ -1,0 +1,16 @@
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v2/MessageProcessor.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v1/MessageEncoder.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v2/MessageSenderImpl.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v2/MessageDecoder.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v1/LongPartitioner.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v1/MessageDecoder.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v2/MessageConsumer.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v2/MessageEncoder.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/MessageStatus.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v2/LongPartitioner.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/MessageSender.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v1/MessageSenderImpl.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/MessageListener.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v1/MessageConsumer.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/Message.java
+/Users/ZhangJunyong/ec_workspace/zPaaS_parent/zPaaS_message/src/main/java/com/zpaas/message/v1/MessageProcessor.java

@@ -1,0 +1,59 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.zpaas</groupId>
+	<artifactId>zPaaS_parent</artifactId>
+	<version>${zpaas.version}</version>
+	<packaging>pom</packaging>
+	<name>zPaaS_parent</name>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<zpaas.version>1.0.3-SNAPSHOT</zpaas.version>
+		<commons-lang.version>2.4</commons-lang.version>
+		<commons-beanutils.version>1.8.2</commons-beanutils.version>
+		<slf4j.version>1.7.18</slf4j.version>
+		<log4j.version>1.2.17</log4j.version>
+		<servlet-api.version>3.0.1</servlet-api.version>
+		<zookeeper.version>3.4.6</zookeeper.version>
+		<spring.version>3.1.1.RELEASE</spring.version>
+		<json.version>2.4</json.version>
+		<jedis.version>2.8.0</jedis.version>
+		<mongo.version>3.2.2</mongo.version>
+		<httpclient.version>3.1</httpclient.version>
+		<httpcore.version>4.4</httpcore.version>
+		<kafka_2.9.2.version>0.8.1</kafka_2.9.2.version>
+		<kafka-clients.version>0.9.0.1</kafka-clients.version>
+		<drools.version>6.0.1.Final</drools.version>
+	</properties>
+	<distributionManagement>
+		<repository>
+			<id>releases</id>
+			<name>Internal Releases</name>
+			<url>http://192.168.100.110:8081/nexus/content/repositories/releases</url>
+		</repository>
+		<snapshotRepository>
+			<id>Snapshots</id>
+			<name>Internal Snapshots</name>
+			<url>http://192.168.100.110:8081/nexus/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+	<modules>
+		<module>zPaaS_utils</module>
+		<module>zPaaS_core</module>
+		<module>zPaaS_local_cache</module>
+		<module>zPaaS_remote_cache</module>
+		<module>zPaaS_dispatcher</module>
+		<module>zPaaS_file_manager</module>
+		<module>zPaaS_http_client</module>
+		<module>zPaaS_message</module>
+		<module>zPaaS_log</module>
+		<module>zPaaS_log_server</module>
+		<module>zPaaS_rule</module>
+		<module>zPaaS_cipher</module>
+		<module>zPaaS_signature</module>
+		<module>zPaaS_session</module>
+		<module>zPaaS_all</module>
+		<module>zPaaS_log_service</module>
+	</modules>
+</project>
