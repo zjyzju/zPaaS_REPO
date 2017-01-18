@@ -38,7 +38,7 @@
 		<module>zPaaS_cipher</module>
 		<module>zPaaS_signature</module>
 		<module>zPaaS_session</module>
-		<module>zPaaS_all</module>
+		<module>zPaaS</module>
 		<module>zPaaS_log_service</module>
 	</modules>
 </project>
