@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
 
-import com.sample.po.Transaction;
-import com.sample.service.TransactionSVC;
 import com.zpaas.utils.StringUtil;
 import com.zpaas.vo.LoginInfo;
 
@@ -32,7 +30,7 @@ public class LoginController {
 	private static final String adminLoginpassRandomSessionName = "adminLoginpassRandomSessionName20140526";
 		
 	
-	private TransactionSVC transactionSVC;
+//	private TransactionSVC transactionSVC;
     
 
     
@@ -45,15 +43,15 @@ public class LoginController {
 	public ModelAndView login(HttpServletRequest req){
 		
 		log.info("Enter method Login");
-		Transaction tx = new Transaction();
-		tx.setName("tx");
-		tx.setParticipantNum(1);
-		tx.setParticipants("participant01");
-		try {
-			transactionSVC.createTransaction(tx);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//		Transaction tx = new Transaction();
+//		tx.setName("tx");
+//		tx.setParticipantNum(1);
+//		tx.setParticipants("participant01");
+//		try {
+//			transactionSVC.createTransaction(tx);
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 		return null;
 //		ModelAndView mv = new ModelAndView("login/adminLogin/adminLogin");
 //		String passRandom = System.currentTimeMillis()+"";
