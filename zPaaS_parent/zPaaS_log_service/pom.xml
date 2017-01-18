@@ -10,19 +10,18 @@
 	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<zpaas.version>1.0.3-SNAPSHOT</zpaas.version>
 	</properties>
 	
 	<dependencies>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_core</artifactId>
-			<version>${zpaas.version}</version>
+			<version>1.0.3-SNAPSHOT</version>
 		</dependency>		
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_file_manager</artifactId>
-			<version>${zpaas.version}</version>
+			<version>1.0.3-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>
