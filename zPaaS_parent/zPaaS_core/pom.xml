@@ -4,9 +4,17 @@
 	<parent>
 		<groupId>com.zpaas</groupId>
 		<artifactId>zPaaS_parent</artifactId>
-		<version>${zpaas.version}</version>
+		<version>1.0.3-SNAPSHOT</version>
 	</parent>
 	<artifactId>zPaaS_core</artifactId>
+	
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<zpaas.version>1.0.3-SNAPSHOT</zpaas.version>
+		<zookeeper.version>3.4.6</zookeeper.version>
+		<spring.version>3.1.1.RELEASE</spring.version>
+		<json.version>2.4</json.version>
+	</properties>
 
 	<dependencies>
 		<dependency>
