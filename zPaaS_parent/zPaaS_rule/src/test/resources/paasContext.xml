@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        ">
+        
+	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
+        <constructor-arg value="localhost:2181"/>
+        <constructor-arg value="P"/>
+        <property name="auth" value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf"/>
+    </bean>  
+    <bean id="ruleSVC" class="com.zpaas.file.MongoFileManagerSVCImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/zpaas/rule/ruleSVC"/>
+    </bean>
+    
+</beans>
