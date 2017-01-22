@@ -46,14 +46,16 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 	private String zkServer = null;
 
 	private ZooKeeper zk = null;
-	private Thread selectLeaderThread = null;
+	private SelectLeaderThread selectLeaderThread = null;
 	private String nodeName = null;
 	private String node = null;
+	private final Object zkLock = new Object();
 	private final Object lock = new Object();
 	private final Object lock1 = new Object();
 	private final Object lock2 = new Object();
 	private boolean isLeader = false;
 	private JSONArray occupiedResource = null;
+	private boolean isExpired = false;
 
 	private ConfigurationCenter cc = null;
 	private String confPath = "/com/zpaas/dispatcher/resourceDispatcher";
@@ -63,27 +65,56 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 
 	private Watcher wh = new Watcher() {
 		public void process(WatchedEvent event) {
-			if (log.isDebugEnabled()) {
-				log.debug("receive watch event: {}", event.toString());
-			}
-			if ((domainPath + LEADER_PATH).equals(event.getPath())) {
-				if (EventType.NodeDeleted.equals(event.getType())) {
-					if (log.isDebugEnabled()) {
-						log.debug("Leader is down, notify to select leader.");
+			synchronized (zkLock) {
+				if (log.isInfoEnabled()) {
+					log.info("receive watch event: {}", event.toString());
+				}
+				if ((domainPath + LEADER_PATH).equals(event.getPath())) {
+					if (EventType.NodeDeleted.equals(event.getType())) {
+						if (log.isDebugEnabled()) {
+							log.debug("Leader is down, notify to select leader.");
+						}
+						synchronized (lock) {
+							try {
+								lock.notifyAll();
+							} catch (Exception e) {
+								log.error(e.getMessage(),e);
+							}
+						}
 					}
-					synchronized (lock) {
-						lock.notifyAll();
+				} else if (EventType.NodeChildrenChanged.equals(event.getType())
+						&& (domainPath + EXECUTOR_PATH).equals(event.getPath())) {
+					dispatchResource();
+				} else if (EventType.NodeDataChanged.equals(event.getType()) && nodeName.equals(event.getPath())) {
+					occupyResource();
+				} else if (Event.KeeperState.Expired.equals(event.getState())) {
+					try {
+						isExpired = true;
+						if (zkServer != null) {
+							zk = new ZooKeeper(zkServer, 10000, wh);
+							log.info("reconnect to zookeeper for expired");
+							isLeader = false;
+							zk.getChildren(domainPath + EXECUTOR_PATH, true);
+							zk.exists(domainPath + LEADER_PATH, true);
+							startService();
+							if (selectLeaderThread != null) {
+								selectLeaderThread.stopRunning();
+								synchronized (lock) {
+									try {
+										lock.notifyAll();
+									} catch (Exception e) {
+										log.error(e.getMessage(),e);
+									}
+								}
+							}
+							selectLeaderThread = new SelectLeaderThread();
+							selectLeaderThread.start();
+						}
+					} catch (Exception e) {
+						log.error("reconnect to zookeeper for expired", e);
 					}
 				}
-			} else if (EventType.NodeChildrenChanged.equals(event.getType())
-					&& (domainPath + EXECUTOR_PATH).equals(event.getPath())) {
-				dispatchResource();
-				
-			} else if (EventType.NodeDataChanged.equals(event.getType()) && nodeName.equals(event.getPath())) {
-				occupyResource();
-				
 			}
-			
 		}
 	};
 
@@ -135,23 +166,17 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 		try {
 			if (changed) {
 				if (zkServer != null) {
-					zk = new ZooKeeper(zkServer, 6000, wh);
+					zk = new ZooKeeper(zkServer, 10000, wh);
 					createPath();
 					startService();
 					if (selectLeaderThread != null) {
-						selectLeaderThread.interrupt();
-					}
-					selectLeaderThread = new Thread() {
-						public void run() {
-							while (true && !this.isInterrupted()) {
-								try {
-									selectLeader();
-								} catch (Exception e) {
-									e.printStackTrace();
-								}
-							}
+						selectLeaderThread.stopRunning();
+						try {
+							lock.notifyAll();
+						} catch (Exception e) {
 						}
-					};
+					}
+					selectLeaderThread = new SelectLeaderThread();
 					selectLeaderThread.start();
 				}
 			} else {
@@ -215,21 +240,43 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 		}
 
 	}
+	
+	class SelectLeaderThread extends Thread{
+		private boolean running = true;
+		
+		public void run() {
+			while (running) {
+				try {
+					selectLeader();
+				} catch (Exception e) {
+					log.error(e.getMessage(), e);
+				}
+			}
+			log.info("SelectLeaderThread {} is stopped.", Thread.currentThread().getId());
+		}
+		
+		public void stopRunning() {
+			this.running = false;
+		}
+	}
 
 	public void selectLeader() {
-		if (log.isDebugEnabled()) {
-			log.debug("begin to select leader...");
+		if (log.isInfoEnabled()) {
+			log.info("thread {} begin to select leader...", Thread.currentThread().getId());
 		}
 		try {
 			Stat stat = zk.exists(domainPath + LEADER_PATH, true);
 			String newLeader = null;
 			if (stat == null) {
-				newLeader = zk.create(domainPath + LEADER_PATH, nodeName.getBytes(), Ids.OPEN_ACL_UNSAFE,
-						CreateMode.EPHEMERAL);
+				try {
+					newLeader = zk.create(domainPath + LEADER_PATH, nodeName.getBytes(), Ids.OPEN_ACL_UNSAFE,
+							CreateMode.EPHEMERAL);
+				} catch (Exception e) {
+				}
 			}
 			if (newLeader != null) {
-				if (log.isDebugEnabled()) {
-					log.debug("I'm the leader: {}", nodeName);
+				if (log.isInfoEnabled()) {
+					log.info("I'm the leader: {}", nodeName);
 				}
 				isLeader = true;
 				dispatchResource();
@@ -237,15 +284,17 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 					lock.wait();
 				}
 			} else {
-				if (log.isDebugEnabled()) {
-					log.debug("follow leader.");
+				if (log.isInfoEnabled()) {
+					log.info("follow leader.");
 				}
+				zk.getChildren(domainPath, true);
 				isLeader = false;
 				synchronized (lock) {
 					lock.wait();
 				}
 			}
 		} catch (Exception e) {
+			log.error(e.getMessage(),e);
 		}
 	}
 
@@ -571,7 +620,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 					if (log.isDebugEnabled()) {
 						log.debug("occupiedResource: {}", occupiedResource);
 					}
-					if (occupiedResource.containsAll(occupyResource) && occupyResource.containsAll(occupiedResource)) {
+					if (!isExpired && occupiedResource.containsAll(occupyResource) && occupyResource.containsAll(occupiedResource)) {
 						if (log.isDebugEnabled()) {
 							log.debug("occupyResource has no change, break.");
 						}
@@ -606,7 +655,9 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 								if (log.isDebugEnabled()) {
 									log.debug("release resource: {}", node);
 								}
-								zk.delete(node, -1);
+								try {
+									zk.delete(node, -1);
+								} catch (Exception e) {}
 							} catch (Exception e) {
 								log.error(e.getMessage(), e);
 							}
@@ -615,7 +666,9 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 
 					occupied = new ArrayList<Object>();
 					occupied.addAll(JSONArray.toCollection(occupiedResource));
-					occupying.removeAll(occupied);
+					if(!isExpired) {
+						occupying.removeAll(occupied);
+					}
 					left.addAll(occupying);
 				} else {
 					left.addAll(JSONArray.toCollection(occupyResource));
@@ -634,8 +687,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 						String node = null;
 						String occupyNode = domainPath + OWNER_PATH + resource;
 						try {
-							node = zk
-									.create(occupyNode, nodeName.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
+							node = zk.create(occupyNode, nodeName.getBytes(), Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL);
 							if (log.isDebugEnabled()) {
 								log.debug("occupy resource: {}", occupyNode);
 							}
@@ -704,6 +756,7 @@ public class ResourceDispatcher implements ConfigurationWatcher {
 				log.error(e.getMessage(),e);
 			} 
 		}
+		isExpired = false;
 		if (log.isDebugEnabled()) {
 			log.debug("occupy resource finished: {}", nodeName);
 		}

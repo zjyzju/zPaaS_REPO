@@ -2,25 +2,28 @@
 <!DOCTYPE log4j:configuration PUBLIC "-//log4j/log4j Configuration//EN" "log4j.dtd">
 
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
-    
-    <appender name="STDOUT" class="org.apache.log4j.ConsoleAppender">
-       <layout class="org.apache.log4j.PatternLayout"> 
-          <param name="ConversionPattern" value="%d %-5p %c.%M:%L - %m%n"/> 
-       </layout> 
-    </appender>
-    <appender name="RollingFile" class="org.apache.log4j.RollingFileAppender">
-    	<param name="MaxFileSize" value="100MB"/> 
-    	<param name="File" value="zPaaS.log"/>
-    	<param name="Append" value="true" />  
-    	<param name="MaxBackupIndex" value="10" />
-       	<layout class="org.apache.log4j.PatternLayout"> 
-          	<param name="ConversionPattern" value="%d %-5p %c.%M:%L - %m%n"/> 
-       </layout> 
-    </appender>
-    
-   <!-- for all other loggers log only info and above log messages -->
-     <root>
-        <priority value="INFO"/> 
-        <appender-ref ref="STDOUT" /> 
-     </root>    
+
+	<appender name="STDOUT" class="org.apache.log4j.ConsoleAppender">
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d %-5p %c.%M:%L - %m%n" />
+		</layout>
+	</appender>
+	<appender name="RollingFile" class="org.apache.log4j.RollingFileAppender">
+		<param name="MaxFileSize" value="100MB" />
+		<param name="File" value="zPaaS.log" />
+		<param name="Append" value="true" />
+		<param name="MaxBackupIndex" value="10" />
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%d %-5p %c.%M:%L - %m%n" />
+		</layout>
+	</appender>
+	
+	<logger name="com.zpaas.dispatcher">
+    	 <level value="debug" />    	 
+    </logger>
+
+	<root>
+		<priority value="INFO" />
+		<appender-ref ref="STDOUT" />
+	</root>
 </log4j:configuration> 
