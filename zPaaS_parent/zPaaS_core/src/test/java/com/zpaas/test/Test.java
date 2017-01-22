@@ -10,5 +10,8 @@ public class Test {
 		//加密服务
 		ConfigurationCenter cc = (ConfigurationCenter) PaasContextHolder.getContext().getBean("cc");
 		System.out.println(cc.getRunMode());
+		while(true) {
+			Thread.sleep(1000000l);
+		}
 	}
 }

@@ -3,6 +3,7 @@ package com.zpaas;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -88,6 +89,47 @@ public class ConfigurationCenter {
 		return conf;
 	}
 	
+	private Watcher wh = new Watcher() {
+		public void process(WatchedEvent event) {
+			if(log.isInfoEnabled()) {
+				log.info(event.toString());
+			}
+			if(Event.EventType.NodeDataChanged.equals(event.getType()) && subsMap.size() > 0) {
+				String path = event.getPath();
+				ArrayList<ConfigurationWatcher> watcherList = subsMap.get(path);
+				if(watcherList != null && watcherList.size() > 0) {
+					for(ConfigurationWatcher watcher : watcherList) {
+						try {
+							watcher.process(getConf(path));
+						} catch (PaasException e) {
+							log.error(e.getMessage(),e);
+						}
+					}
+				}
+			}else if(Event.KeeperState.Expired.equals(event.getState())) {
+				try {
+					zookeeper = new ZooKeeper(zkServer, 10000, wh);
+					log.info("reconnect to zookeeper for expired");
+					if(zkAuth != null && zkAuth.length() > 0) {
+						zookeeper.addAuthInfo("digest", CipherUtil.decrypt(zkAuth).getBytes());
+					}
+					if(subsMap != null && !subsMap.isEmpty()) {
+						Iterator<String> confPaths = subsMap.keySet().iterator();
+						while(confPaths.hasNext()) {
+							try {
+								zookeeper.getData(confPaths.next(), true, null);
+							} catch (Exception e) {
+								log.error("zookeeper subscript path failed", e);
+							} 
+						}
+					}
+				} catch (IOException e) {
+					log.error("connect zookeeper failed", e);
+				}
+			}
+		}
+	};
+	
 	public void init() {
 		if(DEV_MODE.equals(runMode)) {
 			try {
@@ -99,26 +141,7 @@ public class ConfigurationCenter {
 			return;
 		}
 		try {
-			zookeeper = new ZooKeeper(zkServer, 10000, new Watcher() {
-				public void process(WatchedEvent event) {
-					if(log.isInfoEnabled()) {
-						log.info(event.toString());
-					}
-					if(Event.EventType.NodeDataChanged.equals(event.getType()) && subsMap.size() > 0) {
-						String path = event.getPath();
-						ArrayList<ConfigurationWatcher> watcherList = subsMap.get(path);
-						if(watcherList != null && watcherList.size() > 0) {
-							for(ConfigurationWatcher watcher : watcherList) {
-								try {
-									watcher.process(getConf(path));
-								} catch (PaasException e) {
-									log.error(e.getMessage(),e);
-								}
-							}
-						}
-					}
-				}
-			});
+			zookeeper = new ZooKeeper(zkServer, 10000, wh);
 			if(zkAuth != null && zkAuth.length() > 0) {
 				zookeeper.addAuthInfo("digest", CipherUtil.decrypt(zkAuth).getBytes());
 			}
