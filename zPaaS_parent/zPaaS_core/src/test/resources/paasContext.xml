@@ -11,7 +11,7 @@
 	<bean id="cc" class="com.zpaas.ConfigurationCenter" init-method="init">
         <constructor-arg value="localhost:2181"/>
         <constructor-arg value="P"/>
-        <property name="auth" value="dc7727d07afc803b6fdbb06914fb52e014d6256e5e8711cf"/>
+        <property name="auth" value="e573857737b840c49967961f4b35ecaa3d44f28a238e3d44"/>
     </bean>  
 
 </beans>

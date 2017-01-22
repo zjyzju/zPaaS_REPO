@@ -10,5 +10,9 @@ public class Test {
 		//本地缓存服务
 		LocalCacheSVC localCache = (LocalCacheSVC)PaasContextHolder.getContext().getBean("localCacheSVC");
 		System.out.println(localCache.getCacheItemString("appName"));
+		
+		while(true) {
+			Thread.sleep(10000l);
+		}
 	}
 }
