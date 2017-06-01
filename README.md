@@ -1,5 +1,6 @@
 # zPaaS_REPO
 一、工程说明
+源码参见github：https://github.com/zjyzju/zPaaS_REPO.git
 
 1、zPaaS：zPaaS技术平台的源码工程
 
