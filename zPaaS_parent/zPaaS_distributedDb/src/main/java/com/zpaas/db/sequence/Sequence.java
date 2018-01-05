@@ -19,25 +19,31 @@ public class Sequence {
 	public Long nextValue() {
 		if(sequence == null) {
 			this.lock.lock();
-			if(sequence == null) {
-				sequence = service.getSequenceCache(sequenceName);
+			try{
+				if (sequence == null) {
+					sequence = service.getSequenceCache(sequenceName);
+				}
+				if (sequence == null) {
+					return null;
+				}
+			} finally {
+				this.lock.unlock();
 			}
-			if(sequence == null) {
-				return null;
-			}
-			this.lock.unlock();
 		}
 		long value = sequence.nextValue();
 		if(value == -1) {
 			this.lock.lock();
-			value = sequence.nextValue();
-			if(value == -1) {
-				sequence = service.getSequenceCache(sequenceName);
+			try {
+				value = sequence.nextValue();
+				if (value == -1) {
+					sequence = service.getSequenceCache(sequenceName);
+				}
+				if (sequence == null) {
+					return null;
+				}
+			} finally {
+				this.lock.unlock();
 			}
-			if(sequence == null) {
-				return null;
-			}
-			this.lock.unlock();
 			if(value == -1) {
 				value = sequence.nextValue();
 			}

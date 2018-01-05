@@ -7,6 +7,7 @@
 		<version>1.0.3-SNAPSHOT</version>
 	</parent>
 	<artifactId>distributedTransaction</artifactId>
+	<version>1.0.4-SNAPSHOT</version>
 	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -61,7 +62,7 @@
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>distributedDb</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>1.0.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
