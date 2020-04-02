@@ -52,10 +52,10 @@ public class HttpClientManagerSVCImpl implements ConfigurationWatcher,HttpClient
 			log.info("new log configuration is received: {}", conf);
 		}
 		JSONObject json = JSONObject.fromObject(conf);
-		if(json.getString(CONNECTION_TIMEOUT) != null && !json.getString(CONNECTION_TIMEOUT).equals(connTimeout)) {
+		if(json.getString(CONNECTION_TIMEOUT) != null && !json.getString(CONNECTION_TIMEOUT).equals(String.valueOf(connTimeout))) {
 			connTimeout = Integer.parseInt(json.getString(CONNECTION_TIMEOUT));
 		}
-		if(json.getInt(CONNECTION_SOTIMEOUT) != 0 && !json.getString(CONNECTION_SOTIMEOUT).equals(connSoTimeout)) {
+		if(json.getInt(CONNECTION_SOTIMEOUT) != 0 && !json.getString(CONNECTION_SOTIMEOUT).equals(String.valueOf(connSoTimeout))) {
 			connSoTimeout = Integer.parseInt(json.getString(CONNECTION_SOTIMEOUT));
 		}
 		if(json.getString(HTTP_CHARSET) != null && !json.getString(HTTP_CHARSET).equals(httpCharset)) {

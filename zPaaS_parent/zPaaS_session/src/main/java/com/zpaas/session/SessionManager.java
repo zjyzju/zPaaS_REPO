@@ -249,7 +249,7 @@ public class SessionManager implements ConfigurationWatcher {
 			testOnReturn = json.getString(TESTONRETURN_KEY);
 		}
 		if (json.getString(DBINDEX_KEY) != null
-				&& !json.getString(DBINDEX_KEY).equals(dbIndex)) {
+				&& json.getInt(DBINDEX_KEY) != dbIndex) {
 			dbIndex = json.getInt(DBINDEX_KEY);
 		}
 		if (json.getInt(EXPIRATIONUPDATEINTERVAL_KEY) != expirationUpdateInterval) {
