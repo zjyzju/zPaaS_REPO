@@ -84,6 +84,11 @@
 			<artifactId>zPaaS_signature</artifactId>
 			<version>${zpaas.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>com.zpaas</groupId>
+			<artifactId>zPaaS_sequence</artifactId>
+			<version>${zpaas.version}</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -116,6 +121,7 @@
 									<include>com.zpaas:zPaaS_rule</include>
 									<include>com.zpaas:zPaaS_session</include>
 									<include>com.zpaas:zPaaS_signature</include>
+									<include>com.zpaas:zPaaS_sequence</include>
 								</includes>
 							</artifactSet>
 						</configuration>
