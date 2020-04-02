@@ -4,7 +4,7 @@
 	<parent>
 		<groupId>com.zpaas</groupId>
 		<artifactId>zPaaS_parent</artifactId>
-		<version>1.0.3-SNAPSHOT</version>
+		<version>${zpaas.version}</version>
 	</parent>
 	<artifactId>zPaaS_log</artifactId>
 	
@@ -16,12 +16,12 @@
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_core</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_message</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 	</dependencies>
 </project>

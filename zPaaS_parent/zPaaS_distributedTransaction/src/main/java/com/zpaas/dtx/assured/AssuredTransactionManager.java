@@ -2,7 +2,9 @@ package com.zpaas.dtx.assured;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -12,16 +14,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.producer.KeyedMessage;
-import kafka.serializer.StringDecoder;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,7 +29,6 @@ import com.zpaas.ConfigurationWatcher;
 import com.zpaas.PaasException;
 import com.zpaas.db.common.DistributedTransactionManager;
 import com.zpaas.db.sequence.Sequence;
-import com.zpaas.dtx.common.ContextDecoder;
 import com.zpaas.dtx.common.TransactionChecker;
 import com.zpaas.dtx.common.TransactionContext;
 import com.zpaas.dtx.common.TransactionPublisher;
@@ -52,7 +50,7 @@ public class AssuredTransactionManager  implements ConfigurationWatcher {
 	private String transactionCheckerTopic = "assured_transaction_checker_topic";
 	private TransactionChecker transactionChecker = null;
 	private int checkerThreadNum = 1;
-	private ConsumerConnector consumer = null;
+	private List<KafkaConsumer<String, TransactionContext>> consumers = null;
 	private ExecutorService executor = null;
 	private String participant = null;
 	private Properties kafkaProps = null;
@@ -122,10 +120,9 @@ public class AssuredTransactionManager  implements ConfigurationWatcher {
 		}
 		
 		kafkaProps.put("group.id", participant);
-		if(transactionChecker != null && (changed || consumer == null)) {
-			stopOld(executor, consumer);
-			ConsumerConfig cfg = new ConsumerConfig(kafkaProps);
-			consumer = Consumer.createJavaConsumerConnector(cfg);
+		if(transactionChecker != null && (changed || consumers == null)) {
+			stopOld(executor, consumers);
+			consumers = new ArrayList<>();
 			startTransactionListener();
 		}
 	}
@@ -146,19 +143,19 @@ public class AssuredTransactionManager  implements ConfigurationWatcher {
 			topicMap.put(this.transactionName + "_abnormal_" + sub, checkerThreadNum);
 		}
 		
-		Map<String, List<KafkaStream<String,TransactionContext>>> topicMessageStreams = 
-				consumer.createMessageStreams(topicMap, new StringDecoder(null), new ContextDecoder(null));
 		executor = Executors.newFixedThreadPool(checkerThreadNum * topicMap.size());
 		int i=0;
 		for(String topic : topicMap.keySet()) {
-			List<KafkaStream<String,TransactionContext>> streams = topicMessageStreams.get(topic);			
-			for(final KafkaStream<String,TransactionContext> stream : streams) {
+			for(int j=0; j<checkerThreadNum; j++) {
+				KafkaConsumer<String, TransactionContext> consumer = new KafkaConsumer<>(kafkaProps);
+				consumer.subscribe(Arrays.asList(topic));
+				consumers.add(consumer);
 				if(i<checkerThreadNum) {
-					executor.execute(new AssuredTransactionCheckProcessor(i, stream, publisher, 
+					executor.execute(new AssuredTransactionCheckProcessor(i, consumer, publisher, 
 						transactionManagerTopic, transactionChecker));
 				}else {
 					String sub = subsList.get((i-checkerThreadNum)/checkerThreadNum);
-					executor.execute(new AssuredAbnormalTransactionProcessor(i, stream, publisher, 
+					executor.execute(new AssuredAbnormalTransactionProcessor(i, consumer, publisher, 
 							transactionManagerTopic, subTransactions.get(sub), sub));
 				}
 				i++;
@@ -167,15 +164,18 @@ public class AssuredTransactionManager  implements ConfigurationWatcher {
 	}
 	
 	
-	public void stopOld(ExecutorService oldExecutor, ConsumerConnector oldConsumer) {
+	public void stopOld(ExecutorService oldExecutor, List<KafkaConsumer<String, TransactionContext>> oldConsumers) {
 		if(log.isInfoEnabled()) {
 			log.info("stop Old...");
 		}
-		if(oldConsumer != null) {
-			if(log.isDebugEnabled()) {
-				log.debug("old consumer is closed: {}", oldConsumer);
+		if(oldConsumers != null && oldConsumers.size() > 0) {
+			
+			for(KafkaConsumer<String, TransactionContext> oldConsumer : oldConsumers) {
+				if(log.isDebugEnabled()) {
+					log.debug("old consumer is closed: {}", oldConsumers);
+				}
+				oldConsumer.close();
 			}
-			oldConsumer.shutdown();
 		}
 		if(oldExecutor != null) {
 			if(log.isDebugEnabled()) {
@@ -214,8 +214,7 @@ public class AssuredTransactionManager  implements ConfigurationWatcher {
 		context.setContent(transactionContext.toString());
 		context.setTotalParticipants(JSONArray.fromObject(subTransactions.keySet()).toString());
 		context.setParticipantAmount(subTransactions.size());
-		KeyedMessage<String, TransactionContext> transactionMessage = 
-				new KeyedMessage<String, TransactionContext>(transactionManagerTopic,String.valueOf(id), context);
+		ProducerRecord<String, TransactionContext> transactionMessage = new ProducerRecord<String, TransactionContext>(transactionManagerTopic, String.valueOf(context.getTransactionId()), context);
 		if(log.isInfoEnabled()) {
 			log.info("initiate new transaction: {}", context.getTransactionId());
 		}
@@ -309,16 +308,16 @@ class AssuredTransactionCheckProcessor implements Runnable {
 	
 	private String checkerName = null;
 	
-	private KafkaStream<String, TransactionContext> stream = null;	
+	private KafkaConsumer<String, TransactionContext> consumer = null;	
 	TransactionPublisher publisher = null;
 	
 	private String transactionManagerTopic = null;
 	TransactionChecker transactionChecker;
 	
-	public AssuredTransactionCheckProcessor(int checkerId, KafkaStream<String, TransactionContext> stream, 
+	public AssuredTransactionCheckProcessor(int checkerId, KafkaConsumer<String, TransactionContext> consumer, 
 			TransactionPublisher publisher, String transactionManagerTopic, TransactionChecker transactionChecker) {
 		this.checkerName = "TransactionCheckProcessor " + checkerId;
-		this.stream = stream;
+		this.consumer = consumer;
 		this.publisher = publisher;
 		this.transactionManagerTopic = transactionManagerTopic;
 		this.transactionChecker = transactionChecker;
@@ -327,39 +326,40 @@ class AssuredTransactionCheckProcessor implements Runnable {
 		}
 	}
 	public void run() {
-		ConsumerIterator<String, TransactionContext> it = stream.iterator();
+		ConsumerRecords<String, TransactionContext> records = consumer.poll(Duration.ofMillis(100));	
 		TransactionContext msg = null;
-		while(it.hasNext() ) {
-			try {
-				msg = it.next().message();
-				if(log.isDebugEnabled()) {
-					log.debug("{} check transaction:{}",this.checkerName, msg.toString());
-				}
-				TransactionStatus status = new TransactionStatus();
-				transactionChecker.checkTransaction(msg, status);
-				if(status.isRollbackOnly()) {
-					msg.setStatus(TransactionContext.TRANSACTION_STATUS_ROLLBACK);
+		if(records != null && !records.isEmpty()) {
+			for(ConsumerRecord<String, TransactionContext> record : records) {
+				try {
+					msg = record.value();
 					if(log.isDebugEnabled()) {
-						log.debug("the transction:{} has bean rollbacked.", msg.getTransactionId());
+						log.debug("{} check transaction:{}",this.checkerName, msg.toString());
 					}
-				}else {
-					msg.setStatus(TransactionContext.TRANSACTION_STATUS_COMMIT);									
-					if(log.isDebugEnabled()) {
-						log.debug("the transction:{} has been commited.", msg.getTransactionId());
+					TransactionStatus status = new TransactionStatus();
+					transactionChecker.checkTransaction(msg, status);
+					if(status.isRollbackOnly()) {
+						msg.setStatus(TransactionContext.TRANSACTION_STATUS_ROLLBACK);
+						if(log.isDebugEnabled()) {
+							log.debug("the transction:{} has bean rollbacked.", msg.getTransactionId());
+						}
+					}else {
+						msg.setStatus(TransactionContext.TRANSACTION_STATUS_COMMIT);									
+						if(log.isDebugEnabled()) {
+							log.debug("the transction:{} has been commited.", msg.getTransactionId());
+						}
 					}
+					ProducerRecord<String, TransactionContext> transactionMessage = new ProducerRecord<String, TransactionContext>(transactionManagerTopic, String.valueOf(msg.getTransactionId()), msg);
+					if(!publisher.publish(transactionMessage)) {
+						log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
+					}
+				} catch (Exception e) {
+					log.error(e.getMessage(),e);
+				} catch (Error e) {
+					log.error(e.getMessage(),e);
 				}
-				KeyedMessage<String, TransactionContext> transactionMessage = 
-						new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
-								String.valueOf(msg.getTransactionId()), msg);
-				if(!publisher.publish(transactionMessage)) {
-					log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
-				}
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			} catch (Error e) {
-				log.error(e.getMessage(),e);
-			}			
+			}
 		}
+		
 		if(log.isInfoEnabled()) {
 			log.info("{} is stopped", checkerName);
 		}
@@ -373,16 +373,16 @@ class AssuredAbnormalTransactionProcessor implements Runnable {
 	private String processorName = null;
 	private String subTransaction = null;
 	
-	private KafkaStream<String, TransactionContext> stream = null;	
+	private KafkaConsumer<String, TransactionContext> consumer = null;	
 	TransactionPublisher publisher = null;
 	
 	private String transactionManagerTopic = null;
 	AssuredTransactionParticipant subs;
 	
-	public AssuredAbnormalTransactionProcessor(int processorId, KafkaStream<String, TransactionContext> stream, 
+	public AssuredAbnormalTransactionProcessor(int processorId, KafkaConsumer<String, TransactionContext> consumer, 
 			TransactionPublisher publisher, String transactionManagerTopic, AssuredTransactionParticipant subs, String subTransaction) {
 		this.processorName = "AssuredAbnormalTransactionProcessor " + processorId;
-		this.stream = stream;
+		this.consumer = consumer;
 		this.publisher = publisher;
 		this.transactionManagerTopic = transactionManagerTopic;
 		this.subs = subs;
@@ -392,71 +392,72 @@ class AssuredAbnormalTransactionProcessor implements Runnable {
 		}
 	}
 	public void run() {
-		ConsumerIterator<String, TransactionContext> it = stream.iterator();
+		ConsumerRecords<String, TransactionContext> records = consumer.poll(Duration.ofMillis(100));	
 		TransactionContext msg = null;
 		Connection subConn = null;
-		while(it.hasNext() ) {
-			try {
-				msg = it.next().message();
-				if(log.isDebugEnabled()) {
-					log.debug("{} process abnormal transaction:{}",this.processorName, msg.toString());
-				}
-				AssuredTransactionStatus status = new AssuredTransactionStatus();
-				JSONObject ctx = JSONObject.fromObject(msg.getContent());
-				DistributedTransactionManager.beginTransaction();
-				subs.participantTransaction(ctx, status);
-				String subKey = (String)DistributedTransactionManager.getConnectionMap().keySet().iterator().next();
-				subConn = DistributedTransactionManager.getConnectionMap().get(subKey);
-				if(DistributedTransactionManager.getConnectionMap().size() != 1) {
-					log.error("sub transaction only can be assigned with one connection:{}", 
-							DistributedTransactionManager.getConnectionMap());
-					status.setRollbackOnly();
-				}
-				DistributedTransactionManager.unbindConnection(subKey);
-				if(status.isRollbackOnly()) {
-					try {
-						subConn.rollback();
-					} catch (Exception e) {
-						log.error(e.getMessage(),e);
-					}
+		if(records != null && !records.isEmpty()) {
+			for(ConsumerRecord<String, TransactionContext> record : records) {
+				try {
+					msg = record.value();
 					if(log.isDebugEnabled()) {
-						log.debug("the sub transction:{} of {} failed.",subTransaction,msg.getTransactionId());
+						log.debug("{} process abnormal transaction:{}",this.processorName, msg.toString());
 					}
-				}else {
-					try {
-						subConn.commit();
-					} catch (Exception e) {
-						log.error(e.getMessage(),e);
-						return;
+					AssuredTransactionStatus status = new AssuredTransactionStatus();
+					JSONObject ctx = JSONObject.fromObject(msg.getContent());
+					DistributedTransactionManager.beginTransaction();
+					subs.participantTransaction(ctx, status);
+					String subKey = (String)DistributedTransactionManager.getConnectionMap().keySet().iterator().next();
+					subConn = DistributedTransactionManager.getConnectionMap().get(subKey);
+					if(DistributedTransactionManager.getConnectionMap().size() != 1) {
+						log.error("sub transaction only can be assigned with one connection:{}", 
+								DistributedTransactionManager.getConnectionMap());
+						status.setRollbackOnly();
 					}
-					msg.setStatus(TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FINISH);	
-					msg.setParticipant(subTransaction);
-					if(log.isDebugEnabled()) {
-						log.debug("the sub transction:{} of {} has been commited.",subTransaction,msg.getTransactionId());
+					DistributedTransactionManager.unbindConnection(subKey);
+					if(status.isRollbackOnly()) {
+						try {
+							subConn.rollback();
+						} catch (Exception e) {
+							log.error(e.getMessage(),e);
+						}
+						if(log.isDebugEnabled()) {
+							log.debug("the sub transction:{} of {} failed.",subTransaction,msg.getTransactionId());
+						}
+					}else {
+						try {
+							subConn.commit();
+						} catch (Exception e) {
+							log.error(e.getMessage(),e);
+							return;
+						}
+						msg.setStatus(TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FINISH);	
+						msg.setParticipant(subTransaction);
+						if(log.isDebugEnabled()) {
+							log.debug("the sub transction:{} of {} has been commited.",subTransaction,msg.getTransactionId());
+						}
+						ProducerRecord<String, TransactionContext> transactionMessage = new ProducerRecord<String, TransactionContext>(transactionManagerTopic, String.valueOf(msg.getTransactionId()), msg);
+						if(!publisher.publish(transactionMessage)) {
+							log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
+						}
 					}
-					KeyedMessage<String, TransactionContext> transactionMessage = 
-							new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
-									String.valueOf(msg.getTransactionId()), msg);
-					if(!publisher.publish(transactionMessage)) {
-						log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
+					
+				} catch (Exception e) {
+					log.error(e.getMessage(),e);
+				} catch (Error e) {
+					log.error(e.getMessage(),e);
+				} finally {
+					if(subConn != null) {
+						try {
+							subConn.close();
+						} catch (SQLException e) {
+							log.error(e.getMessage(),e);
+						}
 					}
+					DistributedTransactionManager.endTransaction();
 				}
-				
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			} catch (Error e) {
-				log.error(e.getMessage(),e);
-			} finally {
-				if(subConn != null) {
-					try {
-						subConn.close();
-					} catch (SQLException e) {
-						log.error(e.getMessage(),e);
-					}
-				}
-				DistributedTransactionManager.endTransaction();
 			}
 		}
+	
 		if(log.isInfoEnabled()) {
 			log.info("{} is stopped", processorName);
 		}

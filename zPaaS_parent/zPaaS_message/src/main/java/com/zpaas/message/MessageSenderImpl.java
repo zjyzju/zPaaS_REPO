@@ -1,4 +1,4 @@
-package com.zpaas.message.v2;
+package com.zpaas.message;
 
 import java.util.Iterator;
 import java.util.Properties;
@@ -17,8 +17,6 @@ import net.sf.json.JSONObject;
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
 import com.zpaas.PaasException;
-import com.zpaas.message.Message;
-import com.zpaas.message.MessageSender;
 
 /**
  * 消息服务-消息发送类

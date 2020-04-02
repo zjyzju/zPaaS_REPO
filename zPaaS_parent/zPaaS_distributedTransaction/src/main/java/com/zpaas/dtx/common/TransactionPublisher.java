@@ -3,6 +3,9 @@ package com.zpaas.dtx.common;
 import java.util.Iterator;
 import java.util.Properties;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,9 +13,6 @@ import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
 import com.zpaas.PaasException;
 
-import kafka.javaapi.producer.Producer;
-import kafka.producer.KeyedMessage;
-import kafka.producer.ProducerConfig;
 import net.sf.json.JSONObject;
 
 public class TransactionPublisher implements ConfigurationWatcher {
@@ -67,12 +67,11 @@ public class TransactionPublisher implements ConfigurationWatcher {
 			}
 		}
 		if (changed) {
-			ProducerConfig cfg = new ProducerConfig(props);
-			producer = new Producer<String, TransactionContext>(cfg);
+			producer = new KafkaProducer<String, TransactionContext>(props);
 		}
 	}
 	
-	public boolean publish(KeyedMessage<String, TransactionContext> transactionMessage) {
+	public boolean publish(ProducerRecord<String, TransactionContext> transactionMessage) {
 		if(producer == null) {
 			return false;
 		}

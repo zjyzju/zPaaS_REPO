@@ -1,27 +1,24 @@
 package com.zpaas.dtx.eventual;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.producer.KeyedMessage;
-import kafka.serializer.StringDecoder;
 import net.sf.json.JSONObject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooKeeper;
 import org.apache.zookeeper.ZooDefs.Ids;
@@ -30,7 +27,6 @@ import org.apache.zookeeper.data.Stat;
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
 import com.zpaas.PaasException;
-import com.zpaas.dtx.common.ContextDecoder;
 import com.zpaas.dtx.common.TransactionContext;
 import com.zpaas.dtx.common.TransactionListener;
 import com.zpaas.dtx.common.TransactionPublisher;
@@ -66,7 +62,7 @@ public class TransactionListenerManager implements ConfigurationWatcher{
 	private String zkServer = null;
 	private Properties kafkaProps = null;
 	
-	private ConsumerConnector consumer = null;
+	private List<KafkaConsumer<String, TransactionContext>> consumers = null;
 	private ExecutorService executor = null;
 	
 	private ZooKeeper zk = null;
@@ -159,9 +155,8 @@ public class TransactionListenerManager implements ConfigurationWatcher{
 			subscribeTopic();
 		}
 		if(changed || threadNumChanged) {
-			stopTransactionListener(executor, consumer);
-			ConsumerConfig cfg = new ConsumerConfig(kafkaProps);
-			consumer = Consumer.createJavaConsumerConnector(cfg);
+			stopTransactionListener(executor, consumers);
+			consumers = new ArrayList<>();
 			startTransactionListener();
 		}
 	}
@@ -222,40 +217,45 @@ public class TransactionListenerManager implements ConfigurationWatcher{
 		if(transactionList == null || transactionList.size() == 0) {
 			return;
 		}
-		Map<String, Integer> topicMap = new HashMap<String, Integer>();
-		for(String topic : transactionList) {
-			topicMap.put(topic, lintenerNum);
-		}
-		for(String topic : abnormalTransactionList) {
-			topicMap.put(topic, abnormalListenerNum);
-		}
-		Map<String, List<KafkaStream<String,TransactionContext>>> topicMessageStreams = 
-				consumer.createMessageStreams(topicMap, new StringDecoder(null), new ContextDecoder(null));
-		List<String> allTopics = new ArrayList<String>();
-		allTopics.addAll(transactionList);
-		allTopics.addAll(abnormalTransactionList);
 		executor = Executors.newFixedThreadPool(lintenerNum * transactionList.size() + 
 				abnormalListenerNum*abnormalTransactionList.size());
+		
 		int i=0;
-		for(String monitorTopic : allTopics) {
-			List<KafkaStream<String,TransactionContext>> streams = topicMessageStreams.get(monitorTopic);
-			for(final KafkaStream<String,TransactionContext> stream : streams) {			
-				executor.execute(new TransactionListenerProcessor(i, stream, 
+		for(String topic : transactionList) {
+			for(int j=0; j<lintenerNum; j++) {
+				KafkaConsumer<String, TransactionContext> consumer = new KafkaConsumer<>(kafkaProps);
+				consumer.subscribe(Arrays.asList(topic));
+				consumers.add(consumer);
+				executor.execute(new TransactionListenerProcessor(i, consumer, 
 						publisher, transactionTopic, listener,participant));
 				i++;
 			}
 		}
+		for(String topic : abnormalTransactionList) {
+			for(int j=0; j<abnormalListenerNum; j++) {
+				KafkaConsumer<String, TransactionContext> consumer = new KafkaConsumer<>(kafkaProps);
+				consumer.subscribe(Arrays.asList(topic));
+				consumers.add(consumer);
+				executor.execute(new TransactionListenerProcessor(i, consumer, 
+						publisher, transactionTopic, listener,participant));
+				i++;
+			}
+		}
+		
 	}
 	
-	public void stopTransactionListener(ExecutorService oldExecutor, ConsumerConnector oldConsumer) {
+	public void stopTransactionListener(ExecutorService oldExecutor, List<KafkaConsumer<String, TransactionContext>> oldConsumers) {
 		if(log.isInfoEnabled()) {
 			log.info("stop old TransactionListener...");
 		}
-		if(oldConsumer != null) {
-			if(log.isDebugEnabled()) {
-				log.debug("old consumer is closed: {}", oldConsumer);
+		if(oldConsumers != null && oldConsumers.size() > 0) {
+			
+			for(KafkaConsumer<String, TransactionContext> oldConsumer : oldConsumers) {
+				if(log.isDebugEnabled()) {
+					log.debug("old consumer is closed: {}", oldConsumers);
+				}
+				oldConsumer.close();
 			}
-			oldConsumer.shutdown();
 		}
 		if(oldExecutor != null) {
 			if(log.isDebugEnabled()) {
@@ -332,16 +332,16 @@ class TransactionListenerProcessor implements Runnable {
 	public static final Logger log = LoggerFactory.getLogger(TransactionListenerProcessor.class);
 	
 	private String listenerName = null;
-	private KafkaStream<String, TransactionContext> stream = null;
+	private KafkaConsumer<String, TransactionContext> consumer = null;
 	private TransactionListener listener = null;
 	private TransactionPublisher publisher = null;
 	private String transactionManagerTopic = null;
 	private String participant = null;
 	
-	public TransactionListenerProcessor(int lintenerId, KafkaStream<String, TransactionContext> stream, 
+	public TransactionListenerProcessor(int lintenerId, KafkaConsumer<String, TransactionContext> consumer, 
 			TransactionPublisher publisher, String transactionManagerTopic, TransactionListener listener, String participant) {
 		this.listenerName = "TransactionListenerProcessor " + lintenerId;
-		this.stream = stream;
+		this.consumer = consumer;
 		this.publisher = publisher;
 		this.transactionManagerTopic = transactionManagerTopic;
 		this.listener = listener;
@@ -351,45 +351,47 @@ class TransactionListenerProcessor implements Runnable {
 		}
 	}
 	public void run() {
-		ConsumerIterator<String, TransactionContext> it = stream.iterator();
+		ConsumerRecords<String, TransactionContext> records = consumer.poll(Duration.ofMillis(100));
 		TransactionContext msg = null;
-		while(it.hasNext() ) {
-			try {
-				msg = it.next().message();				
-				log.info("{} TransactionListenerProcessor process transaction:{}",this.listenerName, msg.toString());
-				JSONObject content = null;
-				if(msg.getContent() != null && msg.getContent().trim().length() > 0) {
-					content = JSONObject.fromObject(msg.getContent());
-				}
-				TransactionStatus status = new TransactionStatus();
-				if(msg.getStartTime() !=  null) {
-					log.warn("transaction:{} cost:{}",msg.getTransactionId(), (System.currentTimeMillis()-msg.getStartTime()));
-				}
-				listener.joinTransaction(content, status,msg.getName());
-				if(status.isRollbackOnly()) {
-					msg.setStatus(TransactionContext.TRANSACTION_STATUS_PART_FAILED);
-					if(log.isDebugEnabled()) {
-						log.debug("listener rollback the message:{}", msg.getTransactionId());
+		
+		if(records != null && !records.isEmpty()) {
+			for(ConsumerRecord<String, TransactionContext> record : records) {
+				try {
+					msg = record.value();
+					log.info("{} TransactionListenerProcessor process transaction:{}",this.listenerName, msg.toString());
+					JSONObject content = null;
+					if(msg.getContent() != null && msg.getContent().trim().length() > 0) {
+						content = JSONObject.fromObject(msg.getContent());
 					}
-				}else {
-					msg.setStatus(TransactionContext.TRANSACTION_STATUS_PART_SUCCEED);									
-					if(log.isDebugEnabled()) {
-						log.debug("listener commit the message:{}", msg.getTransactionId());
+					TransactionStatus status = new TransactionStatus();
+					if(msg.getStartTime() !=  null) {
+						log.warn("transaction:{} cost:{}",msg.getTransactionId(), (System.currentTimeMillis()-msg.getStartTime()));
 					}
+					listener.joinTransaction(content, status,msg.getName());
+					if(status.isRollbackOnly()) {
+						msg.setStatus(TransactionContext.TRANSACTION_STATUS_PART_FAILED);
+						if(log.isDebugEnabled()) {
+							log.debug("listener rollback the message:{}", msg.getTransactionId());
+						}
+					}else {
+						msg.setStatus(TransactionContext.TRANSACTION_STATUS_PART_SUCCEED);									
+						if(log.isDebugEnabled()) {
+							log.debug("listener commit the message:{}", msg.getTransactionId());
+						}
+					}
+					msg.setParticipant(participant);	
+					ProducerRecord<String, TransactionContext> transactionMessage = new ProducerRecord<String, TransactionContext>(transactionManagerTopic, String.valueOf(msg.getTransactionId()), msg);
+					if(!publisher.publish(transactionMessage)) {
+						log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
+					}
+				} catch (Exception e) {
+					log.error(e.getMessage(),e);
+				} catch (Error e) {
+					log.error(e.getMessage(),e);
 				}
-				msg.setParticipant(participant);	
-				KeyedMessage<String, TransactionContext> transactionMessage = new KeyedMessage<String, TransactionContext>(
-						transactionManagerTopic,String.valueOf(msg.getTransactionId()), msg);
-				if(!publisher.publish(transactionMessage)) {
-					log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
-				}
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			} catch (Error e) {
-				log.error(e.getMessage(),e);
 			}
-			
 		}
+		
 		if(log.isInfoEnabled()) {
 			log.info("{} is stopped.", listenerName);
 		}

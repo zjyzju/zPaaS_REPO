@@ -1,14 +1,12 @@
-package com.zpaas.message.v2;
+package com.zpaas.message;
+
+import java.time.Duration;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.zpaas.message.Message;
-import com.zpaas.message.MessageListener;
-import com.zpaas.message.MessageStatus;
 
 
 
@@ -41,7 +39,7 @@ public class MessageProcessor implements Runnable {
 	public void run() {
 		Message msg = null;
 		while(!interrupted) {
-			ConsumerRecords<String, Message> records = stream.poll(100);			
+			ConsumerRecords<String, Message> records = stream.poll(Duration.ofMillis(100));			
 			if(records != null && !records.isEmpty()) {
 				for(ConsumerRecord<String, Message> record : records) {
 					try {

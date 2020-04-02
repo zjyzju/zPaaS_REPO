@@ -16,7 +16,7 @@ public class StringHash {
 	}
 	
 	public static void main(String[] args) {
-		System.out.println(StringHash.valueOf("business-topic")%16+1);
+		System.out.println(StringHash.valueOf("asr@swy.zj.pcc")%4+1);
 		System.out.println(StringHash.valueOf("0771A8")%8+1);
 		System.out.println(20140711%16+1);
 		System.out.println(100001%8+1);

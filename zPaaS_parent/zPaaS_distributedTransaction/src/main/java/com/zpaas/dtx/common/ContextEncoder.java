@@ -3,16 +3,12 @@ package com.zpaas.dtx.common;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import kafka.serializer.Encoder;
-import kafka.utils.VerifiableProperties;
+import org.apache.kafka.common.serialization.Serializer;
 
-public class ContextEncoder implements Encoder<TransactionContext> {
+public class ContextEncoder implements Serializer<TransactionContext> {
 	
-	public ContextEncoder(VerifiableProperties props) {
-		
-	}
-
-	public byte[] toBytes(TransactionContext msg) {
+	@Override
+	public byte[] serialize(String topic, TransactionContext msg) {
 		try {
 			ByteArrayOutputStream bos = new ByteArrayOutputStream();
 			ObjectOutputStream oos = new ObjectOutputStream(bos);

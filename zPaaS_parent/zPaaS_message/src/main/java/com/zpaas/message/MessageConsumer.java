@@ -1,4 +1,4 @@
-package com.zpaas.message.v2;
+package com.zpaas.message;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,8 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
 import com.zpaas.PaasException;
-import com.zpaas.message.Message;
-import com.zpaas.message.MessageListener;
 
 
 /**

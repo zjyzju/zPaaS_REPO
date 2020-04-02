@@ -1,4 +1,4 @@
-package com.zpaas.message.v2;
+package com.zpaas.message;
 
 import java.util.Map;
 

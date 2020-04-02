@@ -1,4 +1,4 @@
-package com.zpaas.message.v2;
+package com.zpaas.message;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -6,8 +6,6 @@ import java.io.ObjectOutputStream;
 import java.util.Map;
 
 import org.apache.kafka.common.serialization.Serializer;
-
-import com.zpaas.message.Message;
 
 /**
  * 消息服务-消息编码类

@@ -4,20 +4,20 @@
 	<parent>
 		<groupId>com.zpaas</groupId>
 		<artifactId>zPaaS_parent</artifactId>
-		<version>1.0.3-SNAPSHOT</version>
+		<version>${zpaas.version}</version>
 	</parent>
 	<artifactId>zPaaS_file_manager</artifactId>
 	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<mongo.version>3.2.2</mongo.version>
+		<mongo.version>3.12.2</mongo.version>
 	</properties>
 	
 	<dependencies>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_core</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.mongodb</groupId>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration PUBLIC "-//log4j/log4j Configuration//EN" "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+    
+    <appender name="STDOUT" class="org.apache.log4j.ConsoleAppender">
+       <layout class="org.apache.log4j.PatternLayout"> 
+          <param name="ConversionPattern" value="%d %-5p %c.%M:%L - %m%n"/> 
+       </layout> 
+    </appender>
+    <appender name="RollingFile" class="org.apache.log4j.RollingFileAppender">
+    	<param name="MaxFileSize" value="100MB"/> 
+    	<param name="File" value="logs/service_discovery.log"/>
+    	<param name="Append" value="true" />  
+       	<layout class="org.apache.log4j.PatternLayout"> 
+          	<param name="ConversionPattern" value="%d %-5p %c.%M:%L - %m%n"/> 
+       </layout> 
+    </appender>
+   
+ 
+    <!-- specify the logging level for loggers from other libraries -->
+    <logger name="com.alibaba">
+    	 <level value="error" />   	 
+    </logger>
+    <logger name="org.apache">
+    	 <level value="error" />   	 
+    </logger>
+    
+    
+   <!-- for all other loggers log only info and above log messages -->
+     <root>
+        <priority value="INFO"/> 
+        <appender-ref ref="RollingFile" /> 
+     </root> 
+    
+</log4j:configuration> 

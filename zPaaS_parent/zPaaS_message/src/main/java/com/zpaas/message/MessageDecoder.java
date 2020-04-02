@@ -1,12 +1,10 @@
-package com.zpaas.message.v2;
+package com.zpaas.message;
 
 import java.io.ByteArrayInputStream;
 import java.io.ObjectInputStream;
 import java.util.Map;
 
 import org.apache.kafka.common.serialization.Deserializer;
-
-import com.zpaas.message.Message;
 
 
 /**

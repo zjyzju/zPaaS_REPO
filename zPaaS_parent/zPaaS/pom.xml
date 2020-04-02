@@ -4,84 +4,85 @@
 	<parent>
 		<groupId>com.zpaas</groupId>
 		<artifactId>zPaaS_parent</artifactId>
-		<version>1.0.3-SNAPSHOT</version>
+		<version>1.0.5-SNAPSHOT</version>
 	</parent>
 	<artifactId>zPaaS</artifactId>
 	
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<zpaas.version>1.0.5-SNAPSHOT</zpaas.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_utils</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_core</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_cipher</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_dispatcher</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_file_manager</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_http_client</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_local_cache</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_log</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_log_service</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_message</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_remote_cache</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_rule</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_session</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_signature</artifactId>
-			<version>1.0.3-SNAPSHOT</version>
+			<version>${zpaas.version}</version>
 		</dependency>
 	</dependencies>
 	<build>

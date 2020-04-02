@@ -1,9 +1,10 @@
 package com.zpaas.dtx.eventual;
 
-import java.util.HashMap;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,6 +12,10 @@ import java.util.concurrent.TimeUnit;
 
 import net.sf.json.JSONObject;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,20 +23,12 @@ import com.zpaas.ConfigurationCenter;
 import com.zpaas.ConfigurationWatcher;
 import com.zpaas.PaasException;
 import com.zpaas.db.sequence.Sequence;
-import com.zpaas.dtx.common.ContextDecoder;
 import com.zpaas.dtx.common.TransactionCallback;
 import com.zpaas.dtx.common.TransactionChecker;
 import com.zpaas.dtx.common.TransactionContext;
 import com.zpaas.dtx.common.TransactionPublisher;
 import com.zpaas.dtx.common.TransactionStatus;
 
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.producer.KeyedMessage;
-import kafka.serializer.StringDecoder;
 
 public class TransactionManager implements ConfigurationWatcher {
 	public static final Logger log = LoggerFactory.getLogger(TransactionManager.class);
@@ -55,7 +52,7 @@ public class TransactionManager implements ConfigurationWatcher {
 	private Properties kafkaProps = null;
 	
 	
-	private ConsumerConnector consumer = null;
+	private List<KafkaConsumer<String, TransactionContext>> consumers = null;
 	private ExecutorService executor = null;
 	
 	public void init() {
@@ -118,10 +115,9 @@ public class TransactionManager implements ConfigurationWatcher {
 		}		
 		kafkaProps.put("group.id", participant);
 		
-		if(transactionChecker != null && (changed || consumer == null)) {
-			stopTransactionCheckListener(executor, consumer);
-			ConsumerConfig cfg = new ConsumerConfig(kafkaProps);
-			consumer = Consumer.createJavaConsumerConnector(cfg);
+		if(transactionChecker != null && (changed || consumers == null)) {
+			stopTransactionCheckListener(executor, consumers);
+			consumers = new ArrayList<>();
 			startTransactionCheckListener();
 		}
 	}
@@ -133,29 +129,31 @@ public class TransactionManager implements ConfigurationWatcher {
 		if(checkerTopic == null) {
 			return;
 		}
-		Map<String, Integer> topicMap = new HashMap<String, Integer>();
-		topicMap.put(checkerTopic, checkerThreadNum);
-		Map<String, List<KafkaStream<String,TransactionContext>>> topicMessageStreams = 
-				consumer.createMessageStreams(topicMap, new StringDecoder(null), new ContextDecoder(null));
 		executor = Executors.newFixedThreadPool(checkerThreadNum);
-		List<KafkaStream<String,TransactionContext>> streams = topicMessageStreams.get(checkerTopic);
-		int i=0;
-		for(final KafkaStream<String,TransactionContext> stream : streams) {				
-			executor.execute(new TransactionCheckProcessor(i, stream, publisher, 
-					transactionTopic, transactionChecker));
+		
+		int i = 0;
+		for (int j = 0; j < checkerThreadNum; j++) {
+			KafkaConsumer<String, TransactionContext> consumer = new KafkaConsumer<>(kafkaProps);
+			consumer.subscribe(Arrays.asList(checkerTopic));
+			consumers.add(consumer);
+			executor.execute(
+					new TransactionCheckProcessor(i, consumer, publisher, transactionTopic, transactionChecker));
 			i++;
 		}
 	}
 	
-	public void stopTransactionCheckListener(ExecutorService oldExecutor, ConsumerConnector oldConsumer) {
+	public void stopTransactionCheckListener(ExecutorService oldExecutor, List<KafkaConsumer<String, TransactionContext>> oldConsumers) {
 		if(log.isInfoEnabled()) {
 			log.info("stop TransactionCheckListener...");
 		}
-		if(oldConsumer != null) {
-			if(log.isDebugEnabled()) {
-				log.debug("old consumer is closed: {}", oldConsumer);
+		if(oldConsumers != null && oldConsumers.size() > 0) {
+			
+			for(KafkaConsumer<String, TransactionContext> oldConsumer : oldConsumers) {
+				if(log.isDebugEnabled()) {
+					log.debug("old consumer is closed: {}", oldConsumers);
+				}
+				oldConsumer.close();
 			}
-			oldConsumer.shutdown();
 		}
 		if(oldExecutor != null) {
 			if(log.isDebugEnabled()) {
@@ -193,8 +191,7 @@ public class TransactionManager implements ConfigurationWatcher {
 		context.setStatus(TransactionContext.TRANSACTION_STATUS_NEW);
 //		context.setDistributeId(distributeId);
 //		context.setDistributeTableName(distributeTableName);
-		KeyedMessage<String, TransactionContext> transactionMessage = 
-				new KeyedMessage<String, TransactionContext>(transactionTopic,String.valueOf(id), context);
+		ProducerRecord<String, TransactionContext> transactionMessage = new ProducerRecord<String, TransactionContext>(transactionTopic, String.valueOf(context.getTransactionId()), context);
 		if(log.isInfoEnabled()) {
 			log.info("initiate new transaction: {}", context.getTransactionId());
 		}
@@ -212,16 +209,14 @@ public class TransactionManager implements ConfigurationWatcher {
 //		}
 		if(status.isRollbackOnly()) {
 			context.setStatus(TransactionContext.TRANSACTION_STATUS_ROLLBACK);
-			transactionMessage = new KeyedMessage<String, TransactionContext>(transactionTopic,
-					String.valueOf(id), context);
+			transactionMessage = new ProducerRecord<String, TransactionContext>(transactionTopic, String.valueOf(context.getTransactionId()), context);
 			if(!publisher.publish(transactionMessage)) {
 				log.error("publish transaction failed: {} new status:{}",context.getTransactionId(), context.getStatus());
 				return null;
 			}
 		}else {
 			context.setStatus(TransactionContext.TRANSACTION_STATUS_COMMIT);
-			transactionMessage = new KeyedMessage<String, TransactionContext>(transactionTopic,
-					String.valueOf(id), context);
+			transactionMessage = new ProducerRecord<String, TransactionContext>(transactionTopic, String.valueOf(context.getTransactionId()), context);
 			if(!publisher.publish(transactionMessage)) {
 				log.error("publish transaction failed: {} new status:{}",context.getTransactionId(), context.getStatus());
 				return null;
@@ -286,16 +281,16 @@ class TransactionCheckProcessor implements Runnable {
 	
 	private String checkerName = null;
 	
-	private KafkaStream<String, TransactionContext> stream = null;	
+	private KafkaConsumer<String, TransactionContext> consumer = null;	
 	TransactionPublisher publisher = null;
 	
 	private String transactionManagerTopic = null;
 	TransactionChecker transactionChecker;
 	
-	public TransactionCheckProcessor(int checkerId, KafkaStream<String, TransactionContext> stream, 
+	public TransactionCheckProcessor(int checkerId, KafkaConsumer<String, TransactionContext> consumer, 
 			TransactionPublisher publisher, String transactionManagerTopic, TransactionChecker transactionChecker) {
 		this.checkerName = "TransactionCheckProcessor " + checkerId;
-		this.stream = stream;
+		this.consumer = consumer;
 		this.publisher = publisher;
 		this.transactionManagerTopic = transactionManagerTopic;
 		this.transactionChecker = transactionChecker;
@@ -304,39 +299,43 @@ class TransactionCheckProcessor implements Runnable {
 		}
 	}
 	public void run() {
-		ConsumerIterator<String, TransactionContext> it = stream.iterator();
+		
+		ConsumerRecords<String, TransactionContext> records = consumer.poll(Duration.ofMillis(100));
 		TransactionContext msg = null;
-		while(it.hasNext() ) {
-			try {
-				msg = it.next().message();
-				if(log.isDebugEnabled()) {
-					log.debug("{} check transaction:{}",checkerName, msg.toString());
-				}
-				TransactionStatus status = new TransactionStatus();
-				transactionChecker.checkTransaction(msg, status);
-				if(status.isRollbackOnly()) {
-					msg.setStatus(TransactionContext.TRANSACTION_STATUS_ROLLBACK);
+		
+		if(records != null && !records.isEmpty()) {
+			for(ConsumerRecord<String, TransactionContext> record : records) {
+				try {
+					msg = record.value();
 					if(log.isDebugEnabled()) {
-						log.debug("the transction:{} has bean rollbacked.", msg.getTransactionId());
+						log.debug("{} check transaction:{}",checkerName, msg.toString());
 					}
-				}else {
-					msg.setStatus(TransactionContext.TRANSACTION_STATUS_COMMIT);									
-					if(log.isDebugEnabled()) {
-						log.debug("the transction:{} has been commited.", msg.getTransactionId());
+					TransactionStatus status = new TransactionStatus();
+					transactionChecker.checkTransaction(msg, status);
+					if(status.isRollbackOnly()) {
+						msg.setStatus(TransactionContext.TRANSACTION_STATUS_ROLLBACK);
+						if(log.isDebugEnabled()) {
+							log.debug("the transction:{} has bean rollbacked.", msg.getTransactionId());
+						}
+					}else {
+						msg.setStatus(TransactionContext.TRANSACTION_STATUS_COMMIT);									
+						if(log.isDebugEnabled()) {
+							log.debug("the transction:{} has been commited.", msg.getTransactionId());
+						}
 					}
+					ProducerRecord<String, TransactionContext> transactionMessage = new ProducerRecord<String, TransactionContext>(transactionManagerTopic, String.valueOf(msg.getTransactionId()), msg);
+					if(!publisher.publish(transactionMessage)) {
+						log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
+					}
+				} catch (Exception e) {
+					log.error(e.getMessage(),e);
+				} catch (Error e) {
+					log.error(e.getMessage(),e);
 				}
-				KeyedMessage<String, TransactionContext> transactionMessage = 
-						new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
-								String.valueOf(msg.getTransactionId()), msg);
-				if(!publisher.publish(transactionMessage)) {
-					log.error("publish transaction failed: {} new status:{}",msg.getTransactionId(), msg.getStatus());
-				}
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			} catch (Error e) {
-				log.error(e.getMessage(),e);
-			}			
+			}
 		}
+		
+		
 		if(log.isInfoEnabled()) {
 			log.info("{} is stopped", checkerName);
 		}

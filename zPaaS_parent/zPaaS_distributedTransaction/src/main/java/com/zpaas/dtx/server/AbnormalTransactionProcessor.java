@@ -6,10 +6,10 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import kafka.producer.KeyedMessage;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -292,18 +292,14 @@ class AbnormalProcessor extends Thread {
 				transaction.setStatus(TransactionContext.TRANSACTION_STATUS_DELIVERED);
 				transaction.setStatusTime(new Date());
 				contextDAO.update(transaction);
-				KeyedMessage<String, TransactionContext> keyedMsg = 
-						new KeyedMessage<String, TransactionContext>(
-								deliverMessage.getName(),String.valueOf(transaction.getTransactionId()),deliverMessage);
+				ProducerRecord<String, TransactionContext> keyedMsg = new ProducerRecord<String, TransactionContext>(checkerTopic, String.valueOf(transaction.getTransactionId()), transaction);
 				if(log.isDebugEnabled()) {
 					log.debug("AbnormalProcessor deliver message:{}", keyedMsg);
 				}
 				publisher.getProducer().send(keyedMsg);
 				continue;
 			}else if(TransactionContext.TRANSACTION_STATUS_NEW.equals(transaction.getStatus())) {
-				KeyedMessage<String, TransactionContext> keyedMsg = 
-						new KeyedMessage<String, TransactionContext>(
-								checkerTopic,String.valueOf(transaction.getTransactionId()),deliverMessage);
+				ProducerRecord<String, TransactionContext> keyedMsg = new ProducerRecord<String, TransactionContext>(checkerTopic, String.valueOf(transaction.getTransactionId()), transaction);
 				if(log.isDebugEnabled()) {
 					log.debug("AbnormalProcessor deliver message:{}", keyedMsg);
 				}
@@ -340,11 +336,8 @@ class AbnormalProcessor extends Thread {
 			contextDAO.update(transaction);
 			for(int i=0; i<count; i++) {
 				String subs = participantArray.getString(i);
-				KeyedMessage<String, TransactionContext> keyedMsg = 
-						new KeyedMessage<String, TransactionContext>(
-								deliverMessage.getName()+"_abnormal_"+subs, 
-								String.valueOf(transaction.getTransactionId()), 
-								deliverMessage);
+				ProducerRecord<String, TransactionContext> keyedMsg = new ProducerRecord<String, TransactionContext>(deliverMessage.getName()+"_abnormal_"+subs, String.valueOf(transaction.getTransactionId()), deliverMessage);
+				
 				if(log.isDebugEnabled()) {
 					log.debug("AbnormalProcessor deliver message:{}", keyedMsg);
 				}

@@ -6,9 +6,9 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import kafka.producer.KeyedMessage;
 import net.sf.json.JSONObject;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,9 +39,7 @@ public class AssuredTransactionExecutor {
 			return;
 		}
 		context.setStatus(transactionStatus);
-		KeyedMessage<String, TransactionContext> transactionMessage = 
-				new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
-						String.valueOf(context.getTransactionId()), context);
+		ProducerRecord<String, TransactionContext> transactionMessage = new ProducerRecord<String, TransactionContext>(transactionManagerTopic, String.valueOf(context.getTransactionId()), context);
 		if(log.isInfoEnabled()) {
 			log.info("change status of transaction:{} to {}",context.getTransactionId(), transactionStatus);
 		}
@@ -58,9 +56,7 @@ public class AssuredTransactionExecutor {
 		}
 		context.setStatus(TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FAILED);
 		context.setParticipant(subTransaction);
-		KeyedMessage<String, TransactionContext> transactionMessage = 
-				new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
-						String.valueOf(context.getTransactionId()), context);
+		ProducerRecord<String, TransactionContext> transactionMessage = new ProducerRecord<String, TransactionContext>(transactionManagerTopic, String.valueOf(context.getTransactionId()), context);
 		if(log.isInfoEnabled()) {
 			log.info("change status of transaction:{} to {}", context.getTransactionId(), TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FAILED);
 		}
@@ -77,9 +73,7 @@ public class AssuredTransactionExecutor {
 		}
 		context.setStatus(TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FINISH);
 		context.setParticipant(subTransaction);
-		KeyedMessage<String, TransactionContext> transactionMessage = 
-				new KeyedMessage<String, TransactionContext>(transactionManagerTopic,
-						String.valueOf(context.getTransactionId()), context);
+		ProducerRecord<String, TransactionContext> transactionMessage = new ProducerRecord<String, TransactionContext>(transactionManagerTopic, String.valueOf(context.getTransactionId()), context);
 		if(log.isInfoEnabled()) {
 			log.info("change status of transaction: {} to {}",context.getTransactionId(),TransactionContext.ASSURED_TRANSACTION_STATUS_PART_FINISH);
 		}

@@ -1,6 +1,9 @@
 package com.zpaas.dtx.server;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -10,18 +13,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.ConsumerIterator;
-import kafka.consumer.KafkaStream;
-import kafka.javaapi.consumer.ConsumerConnector;
-import kafka.producer.KeyedMessage;
-import kafka.serializer.StringDecoder;
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -39,6 +39,7 @@ import com.zpaas.dtx.common.ContextDecoder;
 import com.zpaas.dtx.common.Transaction;
 import com.zpaas.dtx.common.TransactionContext;
 import com.zpaas.dtx.common.TransactionPublisher;
+import com.zpaas.dtx.common.TransactionStatus;
 import com.zpaas.dtx.server.dao.TransactionDAO;
 import com.zpaas.message.MessageStatus;
 
@@ -66,7 +67,7 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 	private String zkServer = null;
 	private ZooKeeper zk = null;
 	
-	private ConsumerConnector consumer = null;
+	private List<KafkaConsumer<String, TransactionContext>> consumers = null;
 	private ExecutorService executor = null;
 		
 	private Object lock = new Object();
@@ -185,9 +186,8 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 		}
 
 		if (changed || threadNumChanged) {
-			stopProcessTransaction(executor, consumer);
-			ConsumerConfig cfg = new ConsumerConfig(kafkaProps);
-			consumer = Consumer.createJavaConsumerConnector(cfg);
+			stopProcessTransaction(executor, consumers);
+			consumers = new ArrayList<>();
 			startProcessTransaction();
 		}
 	}
@@ -297,29 +297,31 @@ public class TransactionManagerServer implements ConfigurationWatcher {
 		if (log.isInfoEnabled()) {
 			log.info("start to process transaction...");
 		}
-		Map<String, Integer> map = new HashMap<String, Integer>();
-		map.put(transactionTopic, processorNum);
-		Map<String, List<KafkaStream<String, TransactionContext>>> topicMessageStreams = consumer.createMessageStreams(
-				map, new StringDecoder(null), new ContextDecoder(null));
-		List<KafkaStream<String, TransactionContext>> streams = topicMessageStreams.get(transactionTopic);
 		executor = Executors.newFixedThreadPool(processorNum);
+		
 		int i = 0;
-		for (final KafkaStream<String, TransactionContext> stream : streams) {
-			executor.execute(new TransactionServerProcessor(i, stream, publisher, this.newTransactionProcessor,
+		for (int j = 0; j < processorNum; j++) {
+			KafkaConsumer<String, TransactionContext> consumer = new KafkaConsumer<>(kafkaProps);
+			consumer.subscribe(Arrays.asList(transactionTopic));
+			consumers.add(consumer);
+			executor.execute(new TransactionServerProcessor(i, consumer, publisher, this.newTransactionProcessor,
 					this.chgTransactionProcessor));
 			i++;
 		}
 	}
 
-	public void stopProcessTransaction(ExecutorService oldExecutor, ConsumerConnector oldConsumer) {
+	public void stopProcessTransaction(ExecutorService oldExecutor, List<KafkaConsumer<String, TransactionContext>> oldConsumers) {
 		if (log.isInfoEnabled()) {
 			log.info("stop processing transaction...");
 		}
-		if (oldConsumer != null) {
-			if (log.isDebugEnabled()) {
-				log.debug("old consumer is closed: {}", oldConsumer);
+		if(oldConsumers != null && oldConsumers.size() > 0) {
+			
+			for(KafkaConsumer<String, TransactionContext> oldConsumer : oldConsumers) {
+				if(log.isDebugEnabled()) {
+					log.debug("old consumer is closed: {}", oldConsumers);
+				}
+				oldConsumer.close();
 			}
-			oldConsumer.shutdown();
 		}
 		if (oldExecutor != null) {
 			if (log.isDebugEnabled()) {
@@ -415,16 +417,16 @@ class TransactionServerProcessor implements Runnable {
 	public static final Logger log = LoggerFactory.getLogger(TransactionServerProcessor.class);
 	
 	private String processorName = null;
-	private KafkaStream<String, TransactionContext> stream = null;
+	private KafkaConsumer<String, TransactionContext> consumer = null;
 	private TransactionProcessor<TransactionContext> newTransactionProcessor = null;
 	private TransactionProcessor<TransactionContext> chgTransactionProcessor = null;
 	private TransactionPublisher publisher = null;
 	
-	public TransactionServerProcessor(int processorId, KafkaStream<String, TransactionContext> stream, 
+	public TransactionServerProcessor(int processorId, KafkaConsumer<String, TransactionContext> consumer, 
 			TransactionPublisher publisher, TransactionProcessor<TransactionContext> newTransactionProcessor,
 			TransactionProcessor<TransactionContext> chgTransactionProcessor) {
 		this.processorName = "TransactionProcessor " + processorId;
-		this.stream = stream;
+		this.consumer = consumer;
 		this.publisher = publisher;
 		this.newTransactionProcessor = newTransactionProcessor;
 		this.chgTransactionProcessor = chgTransactionProcessor;
@@ -433,30 +435,33 @@ class TransactionServerProcessor implements Runnable {
 		}
 	}
 	public void run() {
-		ConsumerIterator<String, TransactionContext> it = stream.iterator();
+		ConsumerRecords<String, TransactionContext> records = consumer.poll(Duration.ofMillis(100));
 		TransactionContext msg = null;
-		while(it.hasNext() ) {
-			try {
-				msg = it.next().message();			
-				log.info("{} process transaction:",this.processorName, msg.toString());
-				MessageStatus status = new MessageStatus();
-				if(TransactionContext.TRANSACTION_STATUS_NEW.equals(msg.getStatus()) || 
-						TransactionContext.ASSURED_TRANSACTION_STATUS_NEW.equals(msg.getStatus())) {
-					newTransactionProcessor.processTransaction(msg, status);
-				}else {
-					if(TransactionContext.TRANSACTION_STATUS_COMMIT.equals(msg.getStatus())) {
-						publisher.publish(
-								new KeyedMessage<String, TransactionContext>(
-										msg.getName(),String.valueOf(msg.getTransactionId()),msg));
+		
+		if(records != null && !records.isEmpty()) {
+			for(ConsumerRecord<String, TransactionContext> record : records) {
+				try {
+					msg = record.value();
+					log.info("{} process transaction:",this.processorName, msg.toString());
+					MessageStatus status = new MessageStatus();
+					if(TransactionContext.TRANSACTION_STATUS_NEW.equals(msg.getStatus()) || 
+							TransactionContext.ASSURED_TRANSACTION_STATUS_NEW.equals(msg.getStatus())) {
+						newTransactionProcessor.processTransaction(msg, status);
+					}else {
+						if(TransactionContext.TRANSACTION_STATUS_COMMIT.equals(msg.getStatus())) {
+							publisher.publish(
+									new ProducerRecord<String, TransactionContext>(msg.getName(), String.valueOf(msg.getTransactionId()), msg));
+						}
+						chgTransactionProcessor.processTransaction(msg, status);				
 					}
-					chgTransactionProcessor.processTransaction(msg, status);				
+				} catch (Exception e) {
+					log.error(e.getMessage(),e);
+				} catch (Error e) {
+					log.error(e.getMessage(),e);
 				}
-			} catch (Exception e) {
-				log.error(e.getMessage(),e);
-			}catch (Error e) {
-				log.error(e.getMessage(),e);
 			}
 		}
+		
 		if(log.isInfoEnabled()) {
 			log.info("{} is stopped", processorName);
 		}
