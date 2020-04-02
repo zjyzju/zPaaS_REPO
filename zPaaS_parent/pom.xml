@@ -41,6 +41,7 @@
 		<module>zPaaS</module>
 		<module>zPaaS_log_service</module>
 		<module>zPaaS_service_discovery</module>
+		<module>zPaaS_sequence</module>
 		<module>zPaaS_distributedDb</module>
 		<module>zPaaS_distributedTransaction</module>
 		<module>zPaaS_service_template</module>

@@ -6,7 +6,7 @@
 		<artifactId>zPaaS_parent</artifactId>
 		<version>${zpaas.version}</version>
 	</parent>
-	<artifactId>distributedDb</artifactId>
+	<artifactId>zPaaS_sequence</artifactId>
 	<version>${zpaas.version}</version>
 	
 	<properties>
@@ -47,27 +47,6 @@
 			<groupId>com.zpaas</groupId>
 			<artifactId>zPaaS_core</artifactId>
 			<version>${zpaas.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.zpaas</groupId>
-			<artifactId>zPaaS_file_manager</artifactId>
-			<version>${zpaas.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.zpaas</groupId>
-			<artifactId>zPaaS_remote_cache</artifactId>
-			<version>${zpaas.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.zpaas</groupId>
-			<artifactId>zPaaS_sequence</artifactId>
-			<version>${zpaas.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.antlr</groupId>
-			<artifactId>antlr4</artifactId>
-			<version>4.2</version>
-			<classifier>complete</classifier>
 		</dependency>
 		<dependency>
 			<groupId>commons-dbcp</groupId>

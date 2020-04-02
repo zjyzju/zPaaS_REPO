@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans>
+  	<bean id="cc" class="com.zpaas.client.ConfigurationCenter" init-method="init">
+        <constructor-arg value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/>
+        <constructor-arg value="P"/>
+        <constructor-arg value="UTF-8"/>
+        <property name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/>
+    </bean>
+    
+    <bean id="sequenceService" class="com.zpaas.db.sequence.SequenceServiceImpl" init-method="init">
+        <property name="cc" ref="cc"/>
+        <property name="confPath" value="/com/zpaas/db/test/sequence"/>
+        <property name="sequenceTable" value="sequence"/>
+        <property name="range" value="1000"/>
+    </bean>
+    <bean id="cust_id_seq" class="com.zpaas.db.sequence.Sequence" >
+        <property name="service" ref="sequenceService"/>
+        <property name="sequenceName" value="cust_id_seq"/>
+    </bean>
+    
+</beans>

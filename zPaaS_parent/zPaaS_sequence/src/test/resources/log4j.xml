@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration PUBLIC "-//log4j/log4j Configuration//EN" "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+    
+    <appender name="STDOUT" class="org.apache.log4j.ConsoleAppender">
+       <layout class="org.apache.log4j.PatternLayout"> 
+          <param name="ConversionPattern" value="%d %-5p %c.%M:%L - %m%n"/> 
+       </layout> 
+    </appender>
+    <appender name="RollingFile" class="org.apache.log4j.RollingFileAppender">
+    	<param name="MaxFileSize" value="100MB"/> 
+    	<param name="File" value="zPaaS_distributedDb.log"/>
+    	<param name="Append" value="true" />  
+       	<layout class="org.apache.log4j.PatternLayout"> 
+          	<param name="ConversionPattern" value="%d %-5p %c.%M:%L - %m%n"/> 
+       </layout> 
+    </appender>
+    
+    <appender name="MSGOUT" class="com.zpaas.log.MessageLogAppender">
+    	<param name="logTopic" value="paas_log_mongo_topic"/> 
+    	<param name="appName" value="distributedDB"/> 
+    	<param name="confPath" value="/com/zpaas/message/logMessageSender"/> 
+    	<param name="ccAddr" value="10.211.55.5:2181,10.211.55.6:2181,10.211.55.7:2181"/> 
+    	<param name="runMod" value="P"/> 
+    	<param name="auth" value="7e6161fe018bd4054414cbc9999fee89f9110662f8981993"/> 
+    	<layout class="org.apache.log4j.PatternLayout"> 
+          	<param name="ConversionPattern" value="%d %-5p %c.%M:%L - %m%n"/> 
+       	</layout> 
+       	<filter class="org.apache.log4j.varia.LevelRangeFilter">  
+            <param name="levelMin" value="INFO" />  
+            <param name="AcceptOnMatch" value="true" />  
+        </filter>
+    </appender>
+ 
+    <!-- specify the logging level for loggers from other libraries -->
+    <logger name="com.zpaas.db">
+    	 <level value="debug" />    	 
+    </logger>
+    <logger name="com.zpaas.db.distribute.DistributedPreparedStatement">
+    	 <level value="debug" />    	 
+    </logger>
+    <logger name="org.apache.commons.beanutils">
+    	 <level value="error" />    	 
+    </logger>
+    
+    <!-- 注意：以下配置需要保留，否则在使用MessageLogAppender时会造成死循环 -->
+    <!-- pay attention: following configuration should be retained for MessageLogAppender -->
+    <logger name="com.zpaas.log.KafkaLogMessageListener" additivity="false">
+    	 <level value="DEBUG" />
+    	 <appender-ref ref="STDOUT" /> 
+    </logger>
+    <logger name="com.zpaas.message.MessageSender" additivity="false">
+    	 <level value="DEBUG" />
+    	 <appender-ref ref="STDOUT" /> 
+    </logger>
+    <logger name="com.zpaas.ConfigurationCenter" additivity="false">
+    	 <level value="DEBUG" />
+    	 <appender-ref ref="STDOUT" /> 
+    </logger>
+    <logger name="com.zpaas.log.MongoLogWriter" additivity="false">
+       <level value="DEBUG" />
+       <appender-ref ref="STDOUT" /> 
+    </logger>
+    <logger name="org.springframework" additivity="false">
+       <level value="WARN" />
+       <appender-ref ref="STDOUT" /> 
+    </logger>
+    <logger name="kafka" additivity="false">
+       <level value="WARN" />
+       <appender-ref ref="STDOUT" />
+    </logger>
+    <logger name="org.apache.zookeeper" additivity="false">
+       <level value="WARN" />
+       <appender-ref ref="STDOUT" />
+    </logger>
+    <!-- end of pay attention-->
+    
+   <!-- for all other loggers log only info and above log messages -->
+     <root>
+        <priority value="DEBUG"/> 
+        <appender-ref ref="STDOUT" /> 
+        <appender-ref ref="MSGOUT" /> 
+     </root> 
+    
+</log4j:configuration> 
