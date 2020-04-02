@@ -4,7 +4,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import com.zpaas.message.Message;
-import com.zpaas.message.v1.MessageConsumer;
+import com.zpaas.message.MessageConsumer;
 import com.zpaas.message.MessageListener;
 import com.zpaas.message.MessageStatus;
 

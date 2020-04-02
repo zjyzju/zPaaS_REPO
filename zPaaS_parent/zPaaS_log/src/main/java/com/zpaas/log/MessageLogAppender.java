@@ -1,4 +1,4 @@
-package com.zpaas.log;
+package com.zpaas.log.v2;
 
 import net.sf.json.JSONObject;
 
@@ -7,7 +7,7 @@ import org.apache.log4j.spi.LoggingEvent;
 
 import com.zpaas.ConfigurationCenter;
 import com.zpaas.message.MessageSender;
-import com.zpaas.message.v1.MessageSenderImpl;
+import com.zpaas.message.v2.MessageSenderImpl;
 import com.zpaas.utils.CommonUtil;
 import com.zpaas.utils.ThreadId;
 

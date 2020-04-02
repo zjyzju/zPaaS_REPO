@@ -3,12 +3,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.zpaas</groupId>
 	<artifactId>zPaaS_parent</artifactId>
-	<version>1.0.3-SNAPSHOT</version>
+	<version>${zpaas.version}</version>
 	<packaging>pom</packaging>
 	<name>zPaaS_parent</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<zpaas.version>1.0.5-SNAPSHOT</zpaas.version>
 	</properties>
 	<distributionManagement>
 		<repository>
@@ -39,6 +40,7 @@
 		<module>zPaaS_session</module>
 		<module>zPaaS</module>
 		<module>zPaaS_log_service</module>
+		<module>zPaaS_service_discovery</module>
 		<module>zPaaS_distributedDb</module>
 		<module>zPaaS_distributedTransaction</module>
 		<module>zPaaS_service_template</module>
