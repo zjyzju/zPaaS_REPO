@@ -12,6 +12,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<httpclient.version>3.1</httpclient.version>
 		<httpcore.version>4.4.13</httpcore.version>
+		<zpaas.version>1.0.5-SNAPSHOT</zpaas.version>
 	</properties>
 	
 	<dependencies>

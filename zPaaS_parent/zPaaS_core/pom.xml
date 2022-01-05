@@ -13,6 +13,7 @@
 		<zookeeper.version>3.5.7</zookeeper.version>
 		<spring.version>5.2.5.RELEASE</spring.version>
 		<json.version>2.4</json.version>
+		<zpaas.version>1.0.5-SNAPSHOT</zpaas.version>
 	</properties>
 
 	<dependencies>
